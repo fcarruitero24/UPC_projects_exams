@@ -16,6 +16,14 @@ problemas reales de logística y manufactura.
 ![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=flat-square&logo=jupyter&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)
 
+<br>
+
+### [▶ Ver el panel de resultados interactivo](https://fcarruitero24.github.io/UPC_projects_exams/)
+
+Incluye un **simulador de lote**: mueves los cuatro sensores de la máquina y el
+Random Forest entrenado responde al instante — sin servidor, porque el modelo
+(100 árboles, 56 KB) se ejecuta en el navegador.
+
 </div>
 
 ---
@@ -127,9 +135,23 @@ UPC_projects_exams/
 │   ├── control_calidad_metalx.py                # mismo análisis como script
 │   ├── df_metalx.csv
 │   └── README.md
+├── docs/
+│   ├── index.html                               # panel publicado en GitHub Pages
+│   └── src/
+│       ├── build.py                             # regenera index.html desde los datos
+│       └── template.html                        # plantilla sin los datos inyectados
 ├── requirements.txt
 ├── LICENSE
 └── README.md
+```
+
+### Regenerar el panel
+
+El panel no se edita a mano: `index.html` se genera reentrenando los modelos y
+serializando el Random Forest dentro de la plantilla.
+
+```bash
+python docs/src/build.py
 ```
 
 ---

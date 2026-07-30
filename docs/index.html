@@ -1,0 +1,1117 @@
+<title>Panel de Resultados — ML en Procesos Industriales</title>
+
+<style>
+  :root {
+    color-scheme: light;
+    --ground:   #eef1f0;
+    --panel:    #fbfcfb;
+    --panel-2:  #f4f7f5;
+    --ink:      #101617;
+    --ink-mid:  #414b49;
+    --ink-dim:  #5f6a68;
+    --rule:     #d6dcda;
+    --rule-2:   #e6eae8;
+    --signal:   #eb6834;
+    --probe:    #2a78d6;
+    --good:     #0ca30c;
+    --warn:     #b07600;
+    --crit:     #d03b3b;
+    --shadow:   0 1px 2px rgba(16, 22, 23, .06);
+
+    --f-display: "Arial Narrow", "Helvetica Neue Condensed", "Liberation Sans Narrow", "Nimbus Sans Narrow", system-ui, sans-serif;
+    --f-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-data: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --ground:   #121618;
+      --panel:    #1c2124;
+      --panel-2:  #232a2d;
+      --ink:      #eaeeec;
+      --ink-mid:  #b3bdba;
+      --ink-dim:  #8e9895;
+      --rule:     #2b3235;
+      --rule-2:   #242b2e;
+      --signal:   #d95926;
+      --probe:    #3987e5;
+      --good:     #0ca30c;
+      --warn:     #fab219;
+      --crit:     #e05d5d;
+      --shadow:   0 1px 2px rgba(0, 0, 0, .3);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground:   #121618;
+    --panel:    #1c2124;
+    --panel-2:  #232a2d;
+    --ink:      #eaeeec;
+    --ink-mid:  #b3bdba;
+    --ink-dim:  #8e9895;
+    --rule:     #2b3235;
+    --rule-2:   #242b2e;
+    --signal:   #d95926;
+    --probe:    #3987e5;
+    --good:     #0ca30c;
+    --warn:     #fab219;
+    --crit:     #e05d5d;
+    --shadow:   0 1px 2px rgba(0, 0, 0, .3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 72px; }
+
+  /* ---------------------------------------------------------- nameplate --- */
+  .nameplate {
+    border-bottom: 1px solid var(--rule);
+    background: var(--panel);
+    margin-bottom: 28px;
+  }
+  .nameplate-inner {
+    max-width: 1180px; margin: 0 auto; padding: 26px 20px 0;
+    display: flex; flex-wrap: wrap; gap: 20px;
+    align-items: flex-end; justify-content: space-between;
+  }
+  .eyebrow {
+    font-family: var(--f-data);
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-dim); margin: 0 0 6px;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-size: clamp(30px, 5vw, 46px);
+    line-height: 1.02; letter-spacing: -.005em;
+    text-transform: uppercase; font-weight: 700;
+    margin: 0 0 4px; text-wrap: balance;
+  }
+  .byline { color: var(--ink-dim); font-size: 13.5px; margin: 0 0 22px; }
+  .byline strong { color: var(--ink-mid); font-weight: 600; }
+
+  /* ------------------------------------------------------------- tabs ---- */
+  .tabs { display: flex; gap: 2px; margin-bottom: -1px; }
+  .tab {
+    font-family: var(--f-display);
+    text-transform: uppercase; letter-spacing: .05em;
+    font-size: 15px; font-weight: 700;
+    padding: 11px 20px;
+    background: var(--panel-2);
+    color: var(--ink-dim);
+    border: 1px solid var(--rule);
+    border-bottom-color: var(--rule);
+    cursor: pointer;
+    position: relative;
+    transition: color .15s, background .15s;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] {
+    background: var(--ground);
+    color: var(--ink);
+    border-bottom-color: var(--ground);
+  }
+  .tab[aria-selected="true"]::before {
+    content: ""; position: absolute; inset: -1px -1px auto -1px; height: 3px;
+    background: var(--signal);
+  }
+  .tab:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; z-index: 2; }
+
+  /* ------------------------------------------------------- stat strip ---- */
+  .readout {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    border: 1px solid var(--rule); background: var(--panel);
+    box-shadow: var(--shadow); margin-bottom: 22px;
+  }
+  .readout > div {
+    padding: 15px 18px;
+    border-right: 1px solid var(--rule-2);
+  }
+  .readout > div:last-child { border-right: 0; }
+  .readout dt {
+    font-family: var(--f-data);
+    font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-dim); margin: 0 0 5px;
+  }
+  .readout dd {
+    margin: 0; font-family: var(--f-data);
+    font-size: 25px; font-weight: 600; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums; line-height: 1.1;
+  }
+  .readout dd small {
+    font-size: 12px; font-weight: 400; color: var(--ink-dim);
+    letter-spacing: 0; margin-left: 3px;
+  }
+
+  /* ----------------------------------------------------------- panels ---- */
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+  .panel {
+    grid-column: span 12;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+    min-width: 0;
+  }
+  .span-6 { grid-column: span 6; }
+  .span-7 { grid-column: span 7; }
+  .span-5 { grid-column: span 5; }
+  @media (max-width: 880px) {
+    .span-6, .span-7, .span-5 { grid-column: span 12; }
+  }
+
+  .panel-head {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--rule);
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  }
+  .panel-head h2 {
+    font-family: var(--f-display);
+    text-transform: uppercase; letter-spacing: .045em;
+    font-size: 16px; font-weight: 700; margin: 0;
+  }
+  .panel-head .note {
+    font-family: var(--f-data); font-size: 11px;
+    color: var(--ink-dim); letter-spacing: .04em;
+    margin-left: auto;
+  }
+  .panel-body { padding: 18px; }
+  .panel-body > p:first-child { margin-top: 0; }
+  .panel-body > p:last-child { margin-bottom: 0; }
+  .panel-body p { max-width: 68ch; color: var(--ink-mid); }
+
+  /* ------------------------------------------------------- simulator ---- */
+  .sim { display: grid; grid-template-columns: 1fr 300px; gap: 0; }
+  @media (max-width: 880px) { .sim { grid-template-columns: 1fr; } }
+
+  .channels { padding: 18px; display: flex; flex-direction: column; gap: 17px; }
+  .channel label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 10px; margin-bottom: 7px;
+  }
+  .ch-name {
+    font-family: var(--f-data); font-size: 11.5px;
+    letter-spacing: .06em; color: var(--ink-mid);
+  }
+  .ch-val {
+    font-family: var(--f-data); font-size: 15px; font-weight: 600;
+    font-variant-numeric: tabular-nums; color: var(--ink);
+  }
+  .ch-val em { font-style: normal; font-size: 11px; color: var(--ink-dim); }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 20px; background: transparent; margin: 0; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px; background: var(--rule); border-radius: 0;
+  }
+  input[type="range"]::-moz-range-track {
+    height: 4px; background: var(--rule);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 13px; height: 20px; margin-top: -8px;
+    background: var(--ink); border: 0; border-radius: 1px;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 13px; height: 20px; border: 0; border-radius: 1px; background: var(--ink);
+  }
+  input[type="range"]:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+  .ch-scale {
+    display: flex; justify-content: space-between;
+    font-family: var(--f-data); font-size: 10px; color: var(--ink-dim);
+    margin-top: 2px;
+  }
+  .ch-weight {
+    font-family: var(--f-data); font-size: 10px;
+    color: var(--ink-dim); letter-spacing: .04em;
+  }
+
+  .display {
+    border-left: 1px solid var(--rule);
+    background: var(--panel-2);
+    padding: 18px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  @media (max-width: 880px) {
+    .display { border-left: 0; border-top: 1px solid var(--rule); }
+  }
+  .display-label {
+    font-family: var(--f-data); font-size: 10.5px;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim);
+  }
+  .big-number {
+    font-family: var(--f-data);
+    font-size: 58px; font-weight: 600; line-height: .95;
+    letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .big-number span { font-size: 17px; color: var(--ink-dim); font-weight: 400; letter-spacing: 0; }
+  .band {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--f-data); font-size: 11.5px; font-weight: 600;
+    letter-spacing: .07em; text-transform: uppercase;
+    padding: 5px 10px; border: 1px solid currentColor; width: fit-content;
+  }
+  .band::before {
+    content: ""; width: 8px; height: 8px; background: currentColor; flex: none;
+  }
+  .band.low { color: var(--good); }
+  .band.mid { color: var(--warn); }
+  .band.high { color: var(--crit); }
+  .meter { display: flex; flex-direction: column; gap: 5px; }
+  .compare {
+    font-size: 12.5px; color: var(--ink-dim); border-top: 1px solid var(--rule);
+    padding-top: 12px; margin-top: auto;
+  }
+  .compare b { color: var(--ink-mid); font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+
+  /* --------------------------------------------------------- charts ----- */
+  .chart { width: 100%; display: block; overflow: visible; }
+  .chart text { font-family: var(--f-data); fill: var(--ink-dim); font-size: 10.5px; }
+  .chart .lbl { fill: var(--ink-mid); font-size: 11.5px; }
+  .chart .val { fill: var(--ink); font-weight: 700; font-size: 12px; }
+  .chart .grid-line { stroke: var(--rule-2); stroke-width: 1; }
+  .chart .axis { stroke: var(--rule); stroke-width: 1; }
+  .bar { transition: opacity .12s; }
+  .dot { transition: r .12s; }
+  .oor { fill: var(--crit); }
+
+  .tip {
+    position: fixed; z-index: 50; pointer-events: none;
+    background: var(--ink); color: var(--panel);
+    font-family: var(--f-data); font-size: 11.5px; line-height: 1.5;
+    padding: 6px 9px; white-space: nowrap;
+    opacity: 0; transition: opacity .1s;
+  }
+  .tip.on { opacity: 1; }
+  .tip b { color: var(--panel); }
+
+  .legend {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    font-family: var(--f-data); font-size: 11px; color: var(--ink-mid);
+    margin-bottom: 12px;
+  }
+  .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; }
+
+  /* ---------------------------------------------------------- tables ---- */
+  details.data { margin-top: 14px; border-top: 1px solid var(--rule-2); }
+  details.data summary {
+    font-family: var(--f-data); font-size: 10.5px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim);
+    cursor: pointer; padding: 9px 0 0; list-style: none;
+  }
+  details.data summary::-webkit-details-marker { display: none; }
+  details.data summary::before { content: "+ "; }
+  details.data[open] summary::before { content: "− "; }
+  details.data summary:hover { color: var(--ink); }
+  details.data summary:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+  .scroll-x { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 10px; }
+  th, td {
+    text-align: left; padding: 7px 12px 7px 0;
+    border-bottom: 1px solid var(--rule-2); white-space: nowrap;
+  }
+  th {
+    font-family: var(--f-data); font-size: 10.5px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim);
+  }
+  td.num {
+    font-family: var(--f-data); font-variant-numeric: tabular-nums;
+    text-align: right; padding-right: 16px;
+  }
+  td.best { color: var(--ink); font-weight: 700; }
+
+  /* ----------------------------------------------------------- prose ---- */
+  .finding {
+    border-left: 3px solid var(--signal);
+    padding: 2px 0 2px 16px; margin: 0 0 16px;
+  }
+  .finding p { margin: 0; }
+  .caution { border-left-color: var(--warn); }
+  .k { font-family: var(--f-data); font-size: .92em; color: var(--ink); }
+  .num-inline { font-family: var(--f-data); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  ol.reasons { margin: 0; padding-left: 20px; color: var(--ink-mid); }
+  ol.reasons li { margin-bottom: 8px; }
+  ol.reasons li:last-child { margin-bottom: 0; }
+
+  footer {
+    margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-size: 12.5px; color: var(--ink-dim);
+    display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between;
+  }
+  footer a { color: var(--ink-mid); }
+  a { color: var(--signal); }
+  [hidden] { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<header class="nameplate">
+  <div class="nameplate-inner">
+    <div>
+      <p class="eyebrow">Ingeniería Industrial · UPC</p>
+      <h1>Machine Learning<br>en Procesos Industriales</h1>
+      <p class="byline">
+        Resultados de dos proyectos predictivos.
+        <strong>Fabrizio Carruitero</strong> · modelos entrenados en Python, ejecutándose aquí en el navegador
+      </p>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:0">
+    <div class="tabs" role="tablist" aria-label="Proyectos">
+      <button class="tab" role="tab" id="tab-metalx" aria-controls="p-metalx" aria-selected="true">Control de calidad · MetalX</button>
+      <button class="tab" role="tab" id="tab-rutas" aria-controls="p-rutas" aria-selected="false">Optimización de rutas</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============================================================ METALX -->
+  <section id="p-metalx" role="tabpanel" aria-labelledby="tab-metalx">
+
+    <dl class="readout">
+      <div><dt>Lotes analizados</dt><dd id="mx-n">—</dd></div>
+      <div><dt>Mejor R² (test)</dt><dd id="mx-r2">—</dd></div>
+      <div><dt>Peso de la vibración</dt><dd id="mx-imp">—</dd></div>
+      <div><dt>Asimetría del objetivo</dt><dd id="mx-skew">—</dd></div>
+    </dl>
+
+    <div class="grid">
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Simulador de lote</h2>
+          <span class="note">Random Forest real · 100 árboles · inferencia local</span>
+        </div>
+        <div class="sim">
+          <div class="channels" id="channels"></div>
+          <div class="display">
+            <div>
+              <p class="display-label" style="margin:0 0 8px">Defectos estimados</p>
+              <p class="big-number" id="pred" style="margin:0">—<span> u</span></p>
+            </div>
+            <div class="meter">
+              <p class="display-label" style="margin:0">Nivel de riesgo</p>
+              <span class="band low" id="band">—</span>
+              <svg id="meter-svg" class="chart" viewBox="0 0 260 34" role="img"
+                   aria-label="Posición de la estimación dentro de la distribución histórica"></svg>
+            </div>
+            <p class="compare" id="compare">—</p>
+          </div>
+        </div>
+        <div class="panel-body" style="border-top:1px solid var(--rule)">
+          <p>
+            Mueve los cuatro sensores y la predicción se recalcula al instante. No hay
+            servidor: el Random Forest entrenado en el notebook se exportó a
+            <span class="k">JSON</span> (100 árboles, 1 500 nodos, 56 KB) y la inferencia corre
+            en JavaScript. La desviación frente a <span class="k">scikit-learn</span> es de
+            <span class="num-inline">0.0000000000</span>.
+          </p>
+        </div>
+      </article>
+
+      <article class="panel span-7">
+        <div class="panel-head">
+          <h2>Importancia de variables</h2>
+          <span class="note">Random Forest</span>
+        </div>
+        <div class="panel-body">
+          <svg id="mx-imp-chart" class="chart" role="img"
+               aria-label="Importancia relativa de las cuatro variables de proceso"></svg>
+          <div class="finding">
+            <p>
+              <strong>La vibración RMS concentra el 89.3 % del poder predictivo.</strong>
+              Monitorearla es la palanca de control de calidad más rentable del proceso, y
+              justifica priorizar el mantenimiento predictivo de la máquina sobre el ajuste
+              fino de temperatura, presión o tiempo de ciclo.
+            </p>
+          </div>
+          <details class="data">
+            <summary>Ver datos</summary>
+            <div class="scroll-x"><table id="mx-imp-table"></table></div>
+          </details>
+        </div>
+      </article>
+
+      <article class="panel span-5">
+        <div class="panel-head"><h2>Modelos</h2><span class="note">R² en test</span></div>
+        <div class="panel-body">
+          <svg id="mx-mod-chart" class="chart" role="img"
+               aria-label="Comparación del R² de los tres modelos"></svg>
+          <details class="data">
+            <summary>Ver datos</summary>
+            <div class="scroll-x"><table id="mx-mod-table"></table></div>
+          </details>
+        </div>
+      </article>
+
+      <article class="panel span-7">
+        <div class="panel-head">
+          <h2>Distribución de defectos</h2>
+          <span class="note">2 500 lotes · 40 intervalos</span>
+        </div>
+        <div class="panel-body">
+          <svg id="mx-hist" class="chart" role="img"
+               aria-label="Histograma de defectos por lote con fuerte asimetría a la derecha"></svg>
+          <div class="finding caution">
+            <p>
+              La mediana está en <span class="num-inline">34.88</span> defectos, pero el
+              máximo llega a <span class="num-inline">533.31</span>. Esa
+              <strong>cola larga de lotes catastróficos</strong> es la razón por la que
+              ningún modelo supera un R² de 0.56.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel span-5">
+        <div class="panel-head"><h2>Predicción vs real</h2><span class="note">500 lotes de test</span></div>
+        <div class="panel-body">
+          <svg id="mx-scatter" class="chart" role="img"
+               aria-label="Dispersión de predicción frente a valor real del Random Forest"></svg>
+          <p style="font-size:13px;margin:12px 0 0">
+            El modelo sigue la diagonal en el rango habitual, pero
+            <strong>subestima los lotes extremos</strong>: la nube se aplana a partir de
+            ~150 defectos.
+          </p>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head"><h2>Por qué el R² se topa en 0.55</h2></div>
+        <div class="panel-body">
+          <ol class="reasons">
+            <li>
+              <strong>Solo una variable informativa.</strong> Con la vibración cargando el
+              89 % y las otras tres aportando ruido, no hay más señal disponible.
+            </li>
+            <li>
+              <strong>La cola larga es impredecible con estos sensores.</strong> Los lotes de
+              300–533 defectos responden a causas no medidas: calidad de la materia prima,
+              desgaste del molde, paradas de línea.
+            </li>
+            <li>
+              <strong>El error cuadrático castiga esos casos.</strong> La validación cruzada
+              lo confirma: MSE promedio de <span class="num-inline">625.6</span> con una
+              desviación entre pliegues de <span class="num-inline">± 277.9</span> — casi tan
+              grande como el propio promedio, porque algunos pliegues concentran más lotes
+              atípicos que otros.
+            </li>
+          </ol>
+          <p style="margin-top:16px">
+            <strong>Qué haría falta:</strong> transformar el objetivo con
+            <span class="k">log1p</span> para comprimir la cola, incorporar variables de
+            materia prima y mantenimiento, o reformular el problema como clasificación
+            —lote conforme / lote en riesgo—, que es además la decisión que realmente toma
+            un supervisor de planta.
+          </p>
+          <details class="data">
+            <summary>Validación cruzada (5 pliegues)</summary>
+            <div class="scroll-x"><table id="mx-cv-table"></table></div>
+          </details>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============================================================= RUTAS -->
+  <section id="p-rutas" role="tabpanel" aria-labelledby="tab-rutas" hidden>
+
+    <dl class="readout">
+      <div><dt>Registros crudos</dt><dd id="rt-raw">—</dd></div>
+      <div><dt>Tras limpieza</dt><dd id="rt-clean">—</dd></div>
+      <div><dt>Predictores</dt><dd id="rt-feat">—</dd></div>
+      <div><dt>Mejor R² (test)</dt><dd id="rt-r2">—</dd></div>
+    </dl>
+
+    <div class="grid">
+
+      <article class="panel span-5">
+        <div class="panel-head"><h2>Modelos</h2><span class="note">R² en test</span></div>
+        <div class="panel-body">
+          <svg id="rt-mod-chart" class="chart" role="img"
+               aria-label="Comparación del R² de los tres modelos de rutas"></svg>
+          <details class="data">
+            <summary>Ver datos</summary>
+            <div class="scroll-x"><table id="rt-mod-table"></table></div>
+          </details>
+        </div>
+      </article>
+
+      <article class="panel span-7">
+        <div class="panel-head">
+          <h2>Importancia de variables</h2>
+          <span class="note">Árbol de decisión · solo las no nulas</span>
+        </div>
+        <div class="panel-body">
+          <svg id="rt-imp-chart" class="chart" role="img"
+               aria-label="Importancia de variables, concentrada en velocidad y distancia"></svg>
+          <div class="finding caution">
+            <p>
+              <strong>Dos variables se llevan el 99.1 %.</strong> El objetivo es el
+              <em>tiempo</em> de ruta, y los predictores dominantes son la velocidad
+              (<span class="num-inline">50.3 %</span>) y la distancia
+              (<span class="num-inline">48.8 %</span>): el modelo está reconstruyendo la
+              identidad física <span class="k">tiempo = distancia / velocidad</span>.
+            </p>
+          </div>
+          <details class="data">
+            <summary>Ver datos</summary>
+            <div class="scroll-x"><table id="rt-imp-table"></table></div>
+          </details>
+        </div>
+      </article>
+
+      <article class="panel span-7">
+        <div class="panel-head"><h2>Predicción vs real</h2><span class="note">204 rutas de test · árbol de decisión</span></div>
+        <div class="panel-body">
+          <svg id="rt-scatter" class="chart" role="img"
+               aria-label="Dispersión de predicción frente a valor real del árbol de decisión"></svg>
+        </div>
+      </article>
+
+      <article class="panel span-5">
+        <div class="panel-head"><h2>Calidad de los datos</h2></div>
+        <div class="panel-body">
+          <p style="margin-top:0">
+            El dataset llega con problemas deliberados. La auditoría encontró
+            <span class="num-inline" id="rt-dups">—</span> registros duplicados y seis
+            variables con nulos entre <span class="num-inline">4.76 %</span> y
+            <span class="num-inline">4.85 %</span>, además de velocidades negativas y
+            distancias imposibles.
+          </p>
+          <p>
+            Al rechazar la normalidad con Kolmogorov-Smirnov, la correlación se midió con
+            <strong>Spearman</strong>: <span class="num-inline">ρ = 0.8358</span> entre
+            distancia y costo de ruta (p &lt; 0.001).
+          </p>
+          <details class="data">
+            <summary>Nulos por variable</summary>
+            <div class="scroll-x"><table id="rt-null-table"></table></div>
+          </details>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head"><h2>Lectura crítica</h2></div>
+        <div class="panel-body">
+          <p style="margin-top:0">
+            El R² de <span class="num-inline">0.879</span> es engañosamente bueno. Se
+            documenta aquí porque reconocer la limitación de un modelo es parte del
+            análisis:
+          </p>
+          <ol class="reasons">
+            <li>
+              Las <strong>14 variables restantes no aportan poder predictivo</strong>,
+              incluidas las que intuitivamente deberían importar, como el índice de tráfico
+              o el de clima — ambas con importancia exactamente 0.
+            </li>
+            <li>
+              Un modelo así <strong>no sería útil en producción</strong>: si ya conoces la
+              velocidad promedio de la ruta, el tiempo se calcula con una división, no con
+              un árbol de decisión.
+            </li>
+            <li>
+              Un planteamiento más honesto sería <strong>predecir la velocidad
+              promedio</strong> —que sí depende de tráfico, clima y hora— y derivar el
+              tiempo a partir de ahí.
+            </li>
+          </ol>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <footer>
+    <span>
+      Modelos entrenados con Python 3.12, scikit-learn 1.9 y TensorFlow 2.21 ·
+      semilla fija <span class="k">SEED = 42</span>
+    </span>
+    <a href="https://github.com/fcarruitero24/UPC_projects_exams">github.com/fcarruitero24/UPC_projects_exams</a>
+  </footer>
+</main>
+
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+
+<script id="payload" type="application/json">{"metalx":{"n":2500,"n_train":2000,"n_test":500,"skew":4.6531,"mediana":34.88,"media":39.36,"maximo":533.31,"std":28.83,"metricas":[{"modelo":"Red Neuronal (RNA)","mae":9.796,"mse":240.0543,"r2":0.5528,"config":"Densa 16→8→1, ReLU, Adam, 100 épocas"},{"modelo":"Random Forest","mae":10.1849,"r2":0.5156,"mse":260.0292,"config":"max_depth=3, 100 árboles"},{"modelo":"Árbol de Decisión","mae":10.8674,"r2":0.4398,"mse":300.7367,"config":"max_depth=3"}],"importancias":[{"variable":"Vibracion_RMS","valor":0.8928},{"variable":"Temp_Matriz_C","valor":0.0753},{"variable":"Presion_Inyeccion_Bar","valor":0.0239},{"variable":"Tiempo_Ciclo_s","valor":0.008}],"correlaciones":[{"variable":"Vibracion_RMS","valor":0.5746},{"variable":"Temp_Matriz_C","valor":0.1416},{"variable":"Presion_Inyeccion_Bar","valor":0.063},{"variable":"Tiempo_Ciclo_s","valor":-0.0459}],"histograma":{"conteos":[293,616,541,439,355,145,47,23,13,4,4,5,1,3,2,1,3,1,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,1],"bordes":[0.0,13.33,26.67,40.0,53.33,66.66,80.0,93.33,106.66,119.99,133.33,146.66,159.99,173.33,186.66,199.99,213.32,226.66,239.99,253.32,266.65,279.99,293.32,306.65,319.99,333.32,346.65,359.98,373.32,386.65,399.98,413.32,426.65,439.98,453.31,466.65,479.98,493.31,506.64,519.98,533.31]},"dispersion":[[77.6,67.61],[16.65,23.81],[33.27,33.21],[12.87,18.63],[58.09,64.22],[27.82,30.35],[51.37,51.35],[68.86,66.62],[20.53,30.35],[130.65,28.81],[46.58,53.77],[16.82,22.45],[10.37,22.44],[11.21,22.36],[45.33,64.21],[41.58,59.15],[14.43,22.7],[11.61,18.63],[10.51,33.05],[17.93,24.92],[12.71,15.22],[85.31,53.32],[36.24,30.35],[26.76,31.67],[44.84,35.47],[19.97,25.45],[17.68,16.91],[30.31,31.64],[15.81,25.75],[11.62,22.22],[38.3,25.01],[63.96,66.21],[10.16,22.45],[24.69,32.52],[23.68,24.52],[9.83,21.92],[38.78,44.21],[28.08,35.47],[22.96,34.03],[32.5,16.91],[58.88,63.73],[18.07,30.19],[53.18,47.12],[44.13,59.27],[7.86,15.31],[11.1,18.63],[30.63,35.7],[50.03,54.61],[59.99,59.05],[18.75,23.25],[42.41,53.94],[48.2,31.42],[62.75,22.53],[70.87,66.73],[9.82,16.91],[29.98,35.01],[5.01,20.97],[52.21,50.27],[22.65,24.37],[34.73,42.26],[9.55,18.63],[35.59,47.08],[108.94,25.32],[12.27,23.25],[21.5,23.73],[68.88,15.22],[23.05,29.22],[20.93,28.19],[39.06,47.12],[24.12,28.4],[36.46,37.12],[58.25,64.53],[26.01,30.65],[37.88,36.89],[1.89,15.22],[71.45,65.3],[50.71,62.15],[12.39,25.32],[9.61,20.19],[81.03,70.29],[59.32,63.97],[69.78,67.72],[15.39,23.94],[9.88,16.91],[38.42,46.71],[56.84,66.1],[63.09,35.96],[23.55,21.51],[10.79,22.6],[13.14,22.22],[21.67,30.26],[73.54,67.42],[15.65,25.33],[31.99,30.35],[28.79,22.22],[18.97,24.08],[18.54,28.75],[3.45,20.79],[59.87,66.1],[63.31,66.63],[27.58,35.09],[24.65,29.36],[19.53,23.66],[49.75,59.05],[30.67,35.09],[40.97,50.97],[30.76,35.09],[8.55,18.51],[62.03,68.03],[76.39,29.48],[33.33,30.45],[56.93,60.91],[2.9,15.22],[76.5,68.34],[29.78,35.09],[72.69,68.34],[18.85,31.21],[20.47,25.41],[63.94,68.08],[63.99,66.28],[59.25,64.09],[7.69,21.06],[8.4,17.09],[63.41,67.61],[61.32,54.96],[52.65,61.74],[25.62,31.04],[43.03,37.25],[84.77,25.56],[16.59,24.92],[37.41,47.12],[14.97,22.54],[19.6,32.78],[15.35,27.84],[31.36,36.36],[56.19,18.63],[49.35,30.4],[13.27,22.93],[24.7,30.45],[77.91,59.05],[32.15,51.62],[22.74,28.57],[18.5,26.52],[6.53,20.67],[99.85,54.78],[102.26,65.99],[15.18,25.56],[23.81,34.58],[37.43,46.91],[22.96,23.75],[59.51,45.18],[63.86,47.29],[56.98,63.36],[15.54,24.4],[64.01,66.21],[32.0,31.04],[17.0,29.48],[55.47,65.84],[14.75,22.45],[55.31,64.34],[9.2,22.22],[68.15,67.72],[28.32,29.16],[24.82,24.92],[14.88,16.91],[6.75,22.1],[49.81,47.12],[98.19,67.72],[48.41,53.94],[16.02,22.44],[55.26,36.23],[49.43,60.19],[27.8,26.65],[57.0,65.8],[63.24,67.1],[63.47,67.71],[66.74,37.25],[42.83,47.12],[5.96,16.91],[31.94,46.06],[38.61,46.91],[6.17,16.91],[65.55,54.61],[19.74,27.84],[19.03,27.07],[15.43,27.41],[37.14,43.36],[20.24,29.04],[16.17,22.77],[37.53,31.66],[55.24,54.61],[46.03,54.17],[46.53,64.1],[72.73,49.03],[33.03,36.23],[41.81,37.12],[30.57,20.04],[61.75,61.74],[67.09,22.36],[54.64,59.27],[55.29,53.77],[71.56,67.72],[15.97,23.94],[73.66,67.99],[33.33,33.52],[78.31,66.1],[99.26,59.05],[23.44,28.62],[35.83,26.65],[54.66,63.73],[76.13,30.64],[6.69,15.22],[63.42,59.27],[15.77,30.26],[18.71,22.93],[72.86,67.61],[64.76,61.83],[48.0,59.36],[49.6,34.84],[61.62,63.73],[38.64,15.31],[75.69,68.99],[49.84,63.84],[58.67,66.1],[57.04,65.73],[30.72,34.84],[22.43,34.58],[57.98,63.96],[8.82,22.6],[24.23,23.66],[21.29,30.45],[62.14,64.78],[51.24,64.09],[53.69,54.61],[73.05,68.08],[10.73,20.88],[3.77,16.91],[20.35,25.48],[30.85,52.73],[48.96,54.21],[42.92,47.12],[37.17,28.71],[78.28,69.3],[31.99,36.07],[18.23,25.94],[15.15,22.24],[102.77,59.87],[10.78,20.38],[11.3,22.78],[20.7,24.92],[67.64,66.28],[14.08,22.22],[47.09,47.34],[49.72,48.97],[48.55,36.89],[38.95,46.47],[20.77,25.13],[24.2,31.74],[36.52,46.91],[55.22,46.28],[38.86,54.91],[14.42,29.48],[68.1,109.51],[25.49,15.22],[52.55,61.74],[63.98,68.18],[42.39,50.47],[70.17,68.08],[48.43,32.99],[62.28,67.83],[14.87,25.83],[12.99,28.72],[13.51,21.45],[63.0,33.52],[30.32,34.92],[30.46,29.45],[31.89,35.55],[52.92,65.73],[50.64,46.91],[91.69,54.61],[37.15,35.03],[45.98,54.34],[22.64,30.45],[26.17,27.91],[41.96,51.67],[44.55,54.61],[13.7,22.24],[31.59,35.56],[11.83,17.0],[25.89,33.52],[21.39,29.12],[3.0,15.22],[70.89,67.83],[29.61,39.25],[32.68,46.91],[108.45,49.03],[21.78,24.92],[17.39,22.22],[112.26,48.18],[27.77,35.09],[29.81,34.89],[57.88,66.28],[22.28,33.93],[14.13,23.81],[36.82,32.11],[19.07,32.66],[37.73,36.78],[35.24,46.91],[33.97,42.26],[37.93,36.31],[24.59,30.35],[25.09,35.03],[57.24,64.05],[58.5,66.21],[25.44,39.35],[27.35,28.57],[35.66,36.31],[42.64,37.12],[30.95,22.39],[49.94,63.97],[14.24,20.02],[23.98,28.71],[34.4,35.01],[24.26,30.72],[24.95,31.77],[5.22,32.94],[9.83,16.91],[41.5,26.15],[7.94,21.38],[29.48,31.04],[7.94,15.22],[27.74,33.1],[17.2,22.36],[16.4,28.62],[41.31,42.39],[33.03,26.65],[41.23,59.05],[42.09,47.12],[41.87,39.25],[12.22,22.22],[19.92,21.53],[25.16,23.82],[3.63,15.22],[56.82,66.73],[34.83,36.07],[38.12,47.12],[30.83,35.7],[18.18,21.92],[50.06,47.29],[60.49,30.35],[22.72,26.15],[76.76,67.99],[46.21,59.75],[64.1,67.74],[41.4,36.89],[16.01,29.77],[25.82,24.6],[15.88,24.04],[71.36,30.35],[23.03,28.19],[52.1,63.84],[23.16,31.42],[64.42,66.3],[37.45,46.06],[33.27,39.92],[41.42,30.35],[47.41,54.61],[33.35,35.98],[52.27,47.12],[21.28,27.22],[68.03,67.66],[20.92,34.56],[22.51,34.74],[47.64,61.5],[42.4,35.09],[31.04,34.58],[12.62,20.79],[23.69,25.45],[23.81,29.22],[26.1,33.52],[60.2,59.27],[24.28,30.35],[18.14,30.1],[36.35,46.91],[14.7,22.44],[46.56,31.04],[99.87,67.99],[84.95,65.73],[64.86,61.74],[92.4,68.1],[35.54,36.23],[55.83,35.09],[23.2,24.55],[20.85,30.45],[26.9,30.35],[32.57,36.07],[12.03,22.74],[26.86,23.82],[35.08,47.12],[46.34,49.35],[14.27,23.41],[12.69,20.19],[52.7,61.61],[22.47,23.73],[102.24,46.1],[9.68,28.4],[9.37,21.3],[45.32,50.97],[54.93,64.34],[50.38,49.6],[57.36,22.88],[21.02,33.21],[37.91,36.46],[22.32,34.89],[50.1,35.41],[54.89,63.96],[47.38,61.5],[30.43,31.04],[100.81,66.97],[19.13,29.16],[48.77,61.74],[42.61,46.1],[10.66,16.91],[60.38,34.84],[37.99,36.36],[23.87,30.35],[24.25,30.35],[53.13,54.78],[29.75,35.56],[17.37,27.89],[79.02,15.22],[49.89,50.27],[34.91,36.07],[54.53,62.19],[49.01,60.52],[40.28,46.12],[35.29,41.84],[20.94,30.35],[17.71,22.54],[46.29,54.61],[76.52,66.07],[45.6,46.47],[20.99,25.56],[70.23,15.31],[13.29,22.31],[29.44,35.09],[65.03,65.84],[46.34,59.05],[27.35,27.81],[37.9,35.31],[51.46,47.12],[19.77,25.45],[21.73,31.04],[48.6,43.33],[22.11,29.28],[27.37,30.64],[17.87,24.08],[28.41,28.02],[48.57,49.24],[46.22,58.69],[42.28,47.12],[13.18,18.63],[30.88,39.42],[30.94,31.04],[35.78,36.8],[18.29,30.21],[16.72,24.37],[47.59,29.28],[27.42,35.01],[8.52,23.97],[24.35,31.91],[48.23,46.91],[28.27,25.01],[43.36,47.62],[59.79,66.1],[7.55,22.22],[9.35,16.94],[50.6,35.96],[31.87,30.35],[47.55,59.27],[18.16,25.45],[12.82,22.33],[14.43,20.88],[16.05,26.89],[27.32,26.36],[2.3,15.31],[5.05,17.0],[32.01,40.36],[26.15,24.08],[170.62,28.62],[53.84,37.25],[18.27,28.23],[22.43,32.99],[12.2,18.6],[14.22,31.58],[14.44,15.31],[53.96,47.12],[21.55,23.94],[31.44,30.64],[29.6,25.49]],"cv":[{"modelo":"Random Forest","mse":625.57,"std":277.86},{"modelo":"Árbol de Decisión","mse":638.41,"std":271.34}],"rangos":[{"variable":"Temp_Matriz_C","min":180.1,"max":240.0,"mediana":210.4},{"variable":"Presion_Inyeccion_Bar","min":120.0,"max":180.0,"mediana":149.6},{"variable":"Tiempo_Ciclo_s","min":8.0,"max":15.0,"mediana":11.4},{"variable":"Vibracion_RMS","min":1.5,"max":6.5,"mediana":3.94}],"modelo_rf":{"features":["Temp_Matriz_C","Presion_Inyeccion_Bar","Tiempo_Ciclo_s","Vibracion_RMS"],"trees":[{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.335000038146973,2.6350001096725464,200.1500015258789,-2.0,-2.0,209.4499969482422,-2.0,-2.0,5.934999942779541,223.5999984741211,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.37734499999998,27.10549618320611,19.464279661016928,11.973865030674848,23.41553398058253,32.2068458274399,27.903323529411757,36.19376021798365,59.436431181486014,54.45124172185432,49.945605700712605,64.81666666666666,73.31225806451616,72.20502325581397,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.585000038146973,3.1450001001358032,217.8499984741211,-2.0,-2.0,204.75,-2.0,-2.0,5.7850000858306885,217.8499984741211,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.62147499999998,27.359483163664827,20.773596358118358,16.587487804878062,27.66638554216869,34.382297734627855,28.187769516728643,39.156876790830935,58.51298755186725,52.08427331887202,47.7584818481848,60.37993670886076,69.82458015267177,68.4054826254826,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.585000038146973,3.1750000715255737,200.0500030517578,-2.0,-2.0,196.0999984741211,-2.0,-2.0,5.934999942779541,218.4000015258789,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.043629999999986,28.496312450436143,21.526009036144586,14.01837837837838,25.29680995475114,36.24887772194304,29.003612903225815,38.789638009049774,59.747510148849834,54.59241187384046,48.30656250000001,66.4245989304813,73.64049999999999,71.83289340101521,192.34]},{"f":[3,0,3,-2,-2,0,-2,-2,3,3,-2,-2,3,-2,-2],"t":[4.295000076293945,202.4499969482422,2.799999952316284,-2.0,-2.0,202.5500030517578,-2.0,-2.0,5.565000057220459,4.305000066757202,-2.0,-2.0,6.259999990463257,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.882385,28.77828970331588,21.307658643326025,11.595132275132276,28.157164179104473,33.733410740203205,533.31,30.81617518248177,57.12511709601874,51.23003868471957,122.21,50.39661448140901,66.1689020771513,63.22057034220529,76.64743243243242]},{"f":[3,3,1,-2,-2,1,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.5350000858306885,3.1750000715255737,168.0999984741211,-2.0,-2.0,120.25,-2.0,-2.0,5.724999904632568,218.4000015258789,-2.0,-2.0,6.325000047683716,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.66550499999994,28.005068382944504,21.072890855457224,18.875459363957578,32.17776785714285,36.323681415929215,123.30499999999999,35.390071556350634,58.81203434610305,52.080000000000005,46.301363636363625,63.71281045751633,69.29672297297294,65.58924999999996,85.18589285714286]},{"f":[3,3,2,-2,-2,3,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.365000009536743,2.084999918937683,14.910000324249268,-2.0,-2.0,2.1350001096725464,-2.0,-2.0,5.255000114440918,4.375,-2.0,-2.0,219.8499984741211,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.52065499999991,27.251362862010232,16.09758333333333,15.374008438818562,73.26,30.11743040685222,91.39285714285714,28.223708609271515,56.95909200968527,48.18816062176163,118.84857142857145,46.88308707124011,64.65359090909094,60.01142394822006,75.6034351145038]},{"f":[3,3,0,-2,-2,0,-2,-2,3,2,-2,-2,3,-2,-2],"t":[4.255000114440918,2.6350001096725464,200.1500015258789,-2.0,-2.0,232.70000457763672,-2.0,-2.0,5.315000057220459,8.265000343322754,-2.0,-2.0,5.355000019073486,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.43341999999997,26.911238859180063,20.388432671081667,12.016575342465753,24.369837133550483,31.32802690582961,29.83484087102178,43.70902777777778,57.71347380410021,47.81725806451612,100.97461538461539,46.1758194774347,67.3868018018018,110.27692307692307,66.09313225058006]},{"f":[3,3,0,-2,-2,1,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.744999885559082,3.1750000715255737,200.1500015258789,-2.0,-2.0,120.25,-2.0,-2.0,5.775000095367432,217.8499984741211,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.74089499999992,30.655296769346382,22.74764430577223,17.206147186147195,25.869804878048782,38.00139130434782,121.30499999999999,37.51565597667638,60.80656203288492,52.933609625668446,49.21336032388663,60.16905511811021,70.78786440677965,69.53904109589038,192.34]},{"f":[3,3,0,-2,-2,1,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.525000095367432,3.5449999570846558,200.1500015258789,-2.0,-2.0,120.39999771118164,-2.0,-2.0,5.565000057220459,218.4000015258789,-2.0,-2.0,5.585000038146973,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.901405,27.756393176279456,23.684180225281597,15.724749034749028,27.50175925925925,35.288101851851856,121.30499999999999,34.88802325581397,59.34289986996097,51.57026378896883,45.27785440613026,62.09794871794873,68.55082386363638,128.32833333333332,67.51421965317918]},{"f":[3,3,0,-2,-2,1,-2,-2,3,2,-2,-2,0,-2,-2],"t":[4.509999990463257,2.625,200.1500015258789,-2.0,-2.0,120.20000076293945,-2.0,-2.0,5.5350000858306885,8.005000114440918,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.52937499999991,28.08464777327937,18.29241050119331,11.172739726027396,22.099999999999994,33.11276960784315,127.30499999999999,32.88133906633909,58.00550326797384,49.55197044334974,146.18,48.83265508684864,67.5657660167131,66.86675070028008,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.525000095367432,2.8249999284744263,200.1500015258789,-2.0,-2.0,203.75,-2.0,-2.0,5.31000018119812,223.54999542236328,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.548734999999965,28.06889575289575,19.48364683301343,13.001890243902436,22.46126050420168,33.84785529715764,28.357731958762876,37.15556935817806,57.79893617021276,49.21461038961039,44.74046808510638,63.61767123287672,64.45881612090682,64.13588383838386,192.34]},{"f":[3,3,0,-2,-2,3,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.365000009536743,2.084999918937683,205.95000457763672,-2.0,-2.0,2.09499990940094,-2.0,-2.0,5.315000057220459,223.6500015258789,-2.0,-2.0,6.259999990463257,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.481404999999974,27.479176276771,15.534315352697092,8.204313725490197,20.91316546762591,30.437769784172634,190.45666666666662,29.94286597938143,58.01919847328244,48.69304945054945,44.03841269841268,59.16598214285714,66.06355450236967,63.624460227272714,78.32871428571427]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.5350000858306885,3.5449999570846558,202.4499969482422,-2.0,-2.0,225.6500015258789,-2.0,-2.0,5.565000057220459,217.9499969482422,-2.0,-2.0,5.585000038146973,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.89261999999998,27.623141486810578,22.546447534766138,16.733079470198675,26.136707566462167,36.35284782608693,33.38772727272727,46.016944444444434,60.3854339118825,52.80391521197007,45.762182539682556,64.71342281879195,69.1216091954023,138.86999999999998,68.10486880466475]},{"f":[3,3,0,-2,-2,1,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.585000038146973,3.1750000715255737,219.3000030517578,-2.0,-2.0,120.29999923706055,-2.0,-2.0,5.315000057220459,223.54999542236328,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[41.03980499999997,28.889616326530618,21.752563718140934,18.049471264367806,28.695862068965518,37.42082437275986,137.18285714285713,36.15343012704174,60.244941935483894,50.87264026402639,45.88393518518518,63.25839080459771,66.26148305084747,65.72497872340429,192.34]},{"f":[3,3,2,-2,-2,1,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.585000038146973,2.8149999380111694,14.910000324249268,-2.0,-2.0,120.25,-2.0,-2.0,5.330000162124634,4.625,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.22516499999997,28.06797427652734,20.076472868217046,19.41218074656188,68.38000000000001,33.73228021978023,114.29714285714284,32.95009708737862,60.229854497354495,50.18353503184716,91.62214285714285,48.249733333333374,67.3668325791855,66.79877272727265,192.34]},{"f":[3,3,0,-2,-2,1,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.580000162124634,2.8149999380111694,200.3499984741211,-2.0,-2.0,120.20000076293945,-2.0,-2.0,5.775000095367432,218.45000457763672,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.618764999999975,28.37189655172412,19.601934826883905,12.652389937106918,22.93018072289155,33.857312101910814,82.4425,33.357078507078505,59.440593922652,52.88212527964207,47.24432727272728,61.89604651162792,70.02411552346572,69.13454545454547,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.585000038146973,2.6850000619888306,219.4499969482422,-2.0,-2.0,211.29999542236328,-2.0,-2.0,5.555000066757202,217.8000030517578,-2.0,-2.0,5.585000038146973,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.70268999999998,27.461935742971907,18.343859649122802,15.130126582278484,25.597714285714286,32.73169835234472,28.124433734939753,37.84403743315507,59.88777483443708,52.114436090225546,48.31453441295546,58.28927631578948,68.60002808988762,134.29444444444445,66.89613832853027]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,3,-2,-2],"t":[4.5350000858306885,3.165000081062317,200.1500015258789,-2.0,-2.0,203.79999542236328,-2.0,-2.0,5.335000038146973,4.545000076293945,-2.0,-2.0,5.3450000286102295,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.723275000000015,28.046616600790507,21.73500732064422,14.609789029535866,25.521278026905833,35.453539518900364,28.82243119266056,39.42491758241757,59.81983673469387,49.26128930817608,146.18,48.64787974683542,67.87167865707428,205.618,66.19999999999997]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.335000038146973,3.125,218.8000030517578,-2.0,-2.0,201.75,-2.0,-2.0,5.265000104904175,223.5999984741211,-2.0,-2.0,6.275000095367432,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.44661999999997,25.70597623089985,19.283494704992442,15.590070588235287,25.93478813559322,33.91731141199226,27.37242105263158,37.72015290519879,56.705109489051125,45.40604838709676,43.207553956834545,51.90797872340426,66.04566666666666,63.66584210526316,78.96471428571428]},{"f":[3,3,0,-2,-2,0,-2,-2,3,2,-2,-2,0,-2,-2],"t":[4.184999942779541,2.6850000619888306,230.29999542236328,-2.0,-2.0,203.5500030517578,-2.0,-2.0,5.315000057220459,8.019999980926514,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.55656499999995,24.740334261838434,19.37090725806451,16.86586466165412,29.675154639175254,29.324216867469865,24.772149122807,32.2643626062323,56.84484290357532,47.47387799564274,146.18,47.041903719912504,66.11482758620684,65.29340563991322,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,1,-2,-2,3,-2,-2],"t":[4.365000009536743,3.1450001001358032,200.1500015258789,-2.0,-2.0,235.1500015258789,-2.0,-2.0,4.375,140.04999542236328,-2.0,-2.0,5.255000114440918,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.94306500000003,28.36304753820035,23.495611940298506,15.885276381909552,26.711019108280254,34.78269685039371,32.95363445378149,61.99000000000001,56.538272506082784,184.18000000000004,27.82,236.30000000000004,55.91410757946217,46.67908602150539,63.61686098654708]},{"f":[3,3,0,-2,-2,3,-2,-2,3,2,-2,-2,3,-2,-2],"t":[4.295000076293945,2.084999918937683,238.20000457763672,-2.0,-2.0,2.09499990940094,-2.0,-2.0,5.315000057220459,8.045000076293945,-2.0,-2.0,5.3450000286102295,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[41.33684999999997,27.6255753791258,15.517051282051282,14.619264069264068,84.64666666666666,30.81993235625708,533.31,29.114649321267,58.8230147895336,49.70711904761908,146.18,49.01306954436452,67.16435729847495,140.29833333333335,66.19569536423842]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.365000009536743,3.1450001001358032,199.9000015258789,-2.0,-2.0,201.75,-2.0,-2.0,5.315000057220459,4.379999876022339,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.92267,27.668349016253188,22.435865237366013,14.000053475935832,25.82105150214592,34.290077519379835,26.683593750000004,38.79762345679013,57.16129963898917,47.77714646464647,236.3,47.29987341772153,65.70411494252873,65.11919168591221,192.34]},{"f":[3,3,0,-2,-2,3,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.335000038146973,2.084999918937683,209.25,-2.0,-2.0,2.09499990940094,-2.0,-2.0,5.315000057220459,223.6500015258789,-2.0,-2.0,219.75,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.71243499999996,27.85758713136729,14.827249999999998,10.700654205607472,19.57505376344086,30.693351468988038,160.57571428571427,29.696447368421037,57.03998864926228,47.787582159624385,44.434440993788826,58.169423076923074,65.70268131868127,62.195244299674286,72.97824324324323]},{"f":[3,3,1,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.674999952316284,2.7649999856948853,168.1500015258789,-2.0,-2.0,203.0500030517578,-2.0,-2.0,5.255000114440918,215.5999984741211,-2.0,-2.0,6.174999952316284,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.62174000000001,28.458975317875844,20.50476923076923,17.82684331797233,34.018953488372105,33.52162790697674,28.022086092715213,36.74660194174757,59.115882352941156,47.450916334661336,44.39319767441859,54.108227848101265,66.22245145631062,63.49325806451613,74.51705882352942]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.355000019073486,2.725000023841858,202.4499969482422,-2.0,-2.0,208.4499969482422,-2.0,-2.0,5.255000114440918,224.3499984741211,-2.0,-2.0,221.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.17011999999996,26.411014617368913,18.572245762711862,11.64630434782609,22.99715277777778,31.765426917510847,26.10034591194968,36.595174262734595,56.89872162485064,48.685215053763436,43.629144981412644,61.88990291262136,63.46952688172043,60.20367601246104,70.7496527777778]},{"f":[3,1,2,-2,-2,3,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.355000019073486,120.20000076293945,10.009999752044678,-2.0,-2.0,2.6950000524520874,-2.0,-2.0,5.275000095367432,4.375,-2.0,-2.0,233.0500030517578,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.216924999999954,26.97674893617022,147.58375,220.45,26.139999999999997,26.149965724078857,18.82026262626264,31.54907738095239,56.64990303030307,47.85110831234254,97.94714285714285,46.951948717948724,64.81140186915887,62.02586666666663,84.52037735849058]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.509999990463257,3.215000033378601,200.3499984741211,-2.0,-2.0,204.70000457763672,-2.0,-2.0,5.930000066757202,218.4000015258789,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.820304999999976,27.66857605177994,22.889213483146072,16.241769911504434,25.980411522633744,34.16267175572518,28.318095238095232,38.07146496815288,59.47938481675396,54.60273234200743,49.685561797752825,64.22093406593406,71.088407079646,70.00580357142857,192.34]},{"f":[3,3,2,-2,-2,3,-2,-2,3,3,-2,-2,3,-2,-2],"t":[4.355000019073486,2.0649999380111694,14.925000190734863,-2.0,-2.0,2.09499990940094,-2.0,-2.0,5.315000057220459,4.375,-2.0,-2.0,5.355000019073486,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.06454499999998,27.30844090528079,16.268419117647063,15.217153558052443,72.40599999999999,30.568903365906642,136.65153846153845,29.050099118942754,56.44376703841391,46.255710723192024,79.24333333333334,45.498341836734674,66.50635467980297,129.34111111111113,65.08188916876577]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.295000076293945,3.0749999284744263,202.4499969482422,-2.0,-2.0,201.75,-2.0,-2.0,5.315000057220459,225.25,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.26226499999994,27.137831431079913,21.10835748792271,15.128219178082198,24.366194029850735,34.36621621621622,28.38146464646464,38.069281249999975,57.62432055749132,48.488846153846154,44.007452229299375,62.28450980392156,66.16444943820224,65.5948081264108,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,0,3,-2,-2,1,-2,-2],"t":[4.5350000858306885,3.125,230.75,-2.0,-2.0,201.75,-2.0,-2.0,218.3499984741211,5.805000066757202,-2.0,-2.0,176.8499984741211,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.06793999999994,28.174305331179315,21.39025196850394,19.41313092979127,31.03787037037036,35.31837479270312,27.62730392156863,39.25065162907267,59.391194225721826,53.23395652173914,45.973287197231826,65.5049122807018,68.7697682119205,67.00757894736846,98.31235294117646]},{"f":[3,3,3,-2,-2,1,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.585000038146973,3.0749999284744263,2.0749999284744263,-2.0,-2.0,120.20000076293945,-2.0,-2.0,5.724999904632568,4.5950000286102295,-2.0,-2.0,195.5500030517578,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.111084999999974,29.27294382022469,21.930648148148133,15.271377777777769,25.472813238770673,36.19842794759825,220.45,35.66046715328467,58.861338345864695,52.03680798004988,158.63,51.23334170854274,69.22738636363637,59.98455696202532,73.17432432432429]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.295000076293945,3.125,200.1500015258789,-2.0,-2.0,203.1500015258789,-2.0,-2.0,5.315000057220459,223.54999542236328,-2.0,-2.0,5.934999942779541,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.84186499999997,27.842113043478303,22.571027607361966,16.004213197969545,25.41424175824177,34.743212851405644,28.40679999999999,38.9958389261745,58.42976470588234,49.76245783132536,44.40288461538461,65.99728155339805,66.69857471264369,61.67008968609864,71.9879716981132]},{"f":[3,3,0,-2,-2,0,-2,-2,3,1,-2,-2,3,-2,-2],"t":[4.585000038146973,3.334999918937683,220.0,-2.0,-2.0,208.3000030517578,-2.0,-2.0,5.315000057220459,177.4499969482422,-2.0,-2.0,5.355000019073486,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.73274499999992,27.491778656126503,21.008822695035466,18.38308943089432,27.073896713615014,35.653357142857146,31.72661538461538,39.05653333333332,60.8005306122449,51.610445205479444,49.638434163701056,101.98636363636363,66.85810383747179,103.95277777777778,65.28703529411766]},{"f":[3,3,1,-2,-2,0,-2,-2,3,2,-2,-2,3,-2,-2],"t":[4.359999895095825,2.690000057220459,168.1500015258789,-2.0,-2.0,209.4499969482422,-2.0,-2.0,5.315000057220459,8.019999980926514,-2.0,-2.0,5.355000019073486,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.20114999999999,26.391458160729076,18.13125265392782,15.2532241813602,33.5714864864865,31.677540760869558,27.255000000000006,36.10008152173914,58.69837326607822,48.644540389972136,146.18,48.098123249299704,67.01479262672812,122.269,65.71162735849056]},{"f":[3,3,3,-2,-2,2,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.765000104904175,3.1750000715255737,2.084999918937683,-2.0,-2.0,8.014999866485596,-2.0,-2.0,5.775000095367432,215.9000015258789,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.661105,30.16092972181555,22.931619613670154,15.85227848101266,26.779793577981653,37.18160173160173,146.18,36.866121562952245,60.1299369085173,54.70187012987009,49.89217391304348,61.83883870967743,68.52273092369475,68.02346774193546,192.34]},{"f":[3,3,1,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.585000038146973,3.165000081062317,168.0999984741211,-2.0,-2.0,201.75,-2.0,-2.0,5.565000057220459,215.8499984741211,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.391889999999975,29.03275095785441,22.410583090379017,20.141999999999978,33.00355371900827,36.37169628432959,28.49568965517243,41.093229974160195,58.84322302158272,51.29448818897638,46.903013100436716,57.910592105263134,68.0026751592357,67.60543130990415,192.34]},{"f":[3,0,3,-2,-2,0,-2,-2,3,1,-2,-2,3,-2,-2],"t":[4.335000038146973,200.0,2.799999952316284,-2.0,-2.0,202.6500015258789,-2.0,-2.0,5.255000114440918,177.4000015258789,-2.0,-2.0,5.355000019073486,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[41.329359999999944,28.383422413793102,20.400695187165766,12.83658227848101,25.933703703703706,32.18181933842245,66.19526315789474,30.45386363636364,59.2070833333334,51.63840909090909,48.870509383378035,96.52652173913044,65.95752252252251,88.99999999999999,64.46556354916065]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.525000095367432,2.8149999380111694,227.3499984741211,-2.0,-2.0,220.29999542236328,-2.0,-2.0,5.775000095367432,224.1999969482422,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.711000000000006,28.281962025316485,18.995157699443418,16.430167464114817,27.856033057851242,35.186220689655194,31.981416666666664,41.46502040816327,59.3391304347826,53.19607515657617,49.707982456140336,61.903576642335786,70.78863813229569,69.83529411764701,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.509999990463257,3.3950001001358032,202.4499969482422,-2.0,-2.0,235.0999984741211,-2.0,-2.0,5.775000095367432,215.70000457763672,-2.0,-2.0,221.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.932779999999966,28.04626506024098,22.175848275862055,16.19286885245901,25.210873180873175,36.230980769230754,34.595847107438,58.21444444444444,56.88471523178813,50.663786008230474,44.429064748201434,58.996730769230766,68.1240148698885,64.25350253807107,78.71416666666667]},{"f":[3,3,0,-2,-2,0,-2,-2,3,2,-2,-2,0,-2,-2],"t":[4.184999942779541,2.6850000619888306,218.6500015258789,-2.0,-2.0,233.54999542236328,-2.0,-2.0,5.315000057220459,8.025000095367432,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.98807,24.63545622119816,17.396459227467805,13.663564954682773,26.548962962962968,30.085169628432958,28.697833037300178,44.03285714285715,56.00728961748644,46.87838012958968,146.18,46.447570498915425,65.35836283185841,65.07680709534372,192.34]},{"f":[3,1,2,-2,-2,3,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.255000114440918,120.20000076293945,10.019999980926514,-2.0,-2.0,3.1750000715255737,-2.0,-2.0,5.525000095367432,215.5999984741211,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.05784000000003,25.72601442741208,125.59833333333331,220.44999999999996,30.746666666666666,25.18273798730736,19.64953775038521,33.09253303964759,55.651548821548886,48.112772466539234,43.77295081967213,54.184541284403664,66.36562499999995,65.33021917808217,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.355000019073486,2.8249999284744263,217.6999969482422,-2.0,-2.0,209.4499969482422,-2.0,-2.0,5.255000114440918,225.1500015258789,-2.0,-2.0,6.275000095367432,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.46237,26.595170603674543,19.37340681362725,15.323696969696966,27.281124260355043,32.190916149068336,28.17025396825395,36.04048632218846,56.623640606767786,46.40141025641028,44.17048951048948,52.536442307692326,65.16040685224837,62.80736572890026,77.26618421052633]},{"f":[3,3,0,-2,-2,1,-2,-2,3,2,-2,-2,3,-2,-2],"t":[4.365000009536743,3.1750000715255737,230.3499984741211,-2.0,-2.0,120.29999923706055,-2.0,-2.0,5.255000114440918,8.025000095367432,-2.0,-2.0,6.275000095367432,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.310955,26.352948929159815,20.802217391304342,18.805540308747826,31.681308411214932,33.66211832061069,220.45,32.94645593869732,56.780445292620854,47.29514450867051,146.18,46.72023255813953,64.23934090909086,62.262499999999946,76.75933333333334]},{"f":[3,3,1,-2,-2,0,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.365000009536743,3.1750000715255737,168.1500015258789,-2.0,-2.0,204.75,-2.0,-2.0,5.315000057220459,4.375,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.51911999999994,27.03882451721242,21.630571010248904,19.69704830053666,30.347016129032248,34.31015748031497,27.975596330275234,39.07200000000002,57.892459826946876,48.63995012468828,187.12000000000003,47.244685138539076,66.98622549019608,66.36871921182265,192.34]},{"f":[3,3,0,-2,-2,3,-2,-2,3,3,-2,-2,3,-2,-2],"t":[4.184999942779541,2.0749999284744263,214.8499984741211,-2.0,-2.0,2.09499990940094,-2.0,-2.0,5.315000057220459,4.200000047683716,-2.0,-2.0,5.355000019073486,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.37959499999999,27.375826484018276,15.230904522613063,10.633650793650792,23.165890410958916,30.07319196428572,163.13090909090909,28.419367231638425,56.11343646408836,46.83970649895182,92.834,45.854817987152025,66.4488785046729,113.13357142857141,64.87016908212563]},{"f":[3,3,0,-2,-2,0,-2,-2,3,2,-2,-2,0,-2,-2],"t":[4.295000076293945,3.125,200.5500030517578,-2.0,-2.0,209.04999542236328,-2.0,-2.0,5.330000162124634,8.369999885559082,-2.0,-2.0,199.8499984741211,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.35919999999991,26.106800000000003,20.448346094946395,13.709719626168233,23.733234624145787,33.18528735632184,28.03022471910111,38.58294117647057,55.809587878787895,46.37050000000002,62.97079999999999,45.263813333333324,64.69343529411768,56.87751592356687,69.27216417910442]},{"f":[3,3,1,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.255000114440918,3.1450001001358032,168.04999542236328,-2.0,-2.0,208.3000030517578,-2.0,-2.0,5.270000219345093,196.0999984741211,-2.0,-2.0,239.5500030517578,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.16416000000001,26.680787545787577,21.750126382306448,19.71445488721804,32.47267326732672,33.48058823529411,29.272383177570102,37.15632653061224,56.37984581497792,47.67435665914221,40.171317829457365,50.75681528662421,64.67346236559139,64.1219870410367,192.34]},{"f":[3,3,0,-2,-2,1,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.355000019073486,3.5549999475479126,200.1500015258789,-2.0,-2.0,120.25,-2.0,-2.0,5.315000057220459,223.75,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.60824499999997,27.743493265993287,23.34786616161615,16.36944029850746,26.916984732824414,36.53474747474749,220.45,36.06913924050635,56.96701970443356,47.00797297297297,43.89759856630824,56.54417582417582,65.303778280543,64.43564920273347,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,2,-2,-2],"t":[4.184999942779541,2.6350001096725464,200.5999984741211,-2.0,-2.0,219.5500030517578,-2.0,-2.0,5.944999933242798,5.255000114440918,-2.0,-2.0,8.949999809265137,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.254404999999934,26.087372197309417,19.458292134831456,12.98474025974026,22.88415807560137,30.490268656716406,27.876099773242636,35.52454148471616,58.103265536723164,52.2373925925926,47.610844748858455,60.787721518987354,76.95785714285711,95.02714285714285,72.4405357142857]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.615000009536743,3.5449999570846558,200.1500015258789,-2.0,-2.0,205.9499969482422,-2.0,-2.0,5.9649999141693115,217.8499984741211,-2.0,-2.0,5.974999904632568,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.586185000000015,28.280169622205086,23.552621359223306,15.39507633587787,27.355604982206405,36.515898520084534,31.37738938053096,41.21753036437245,60.445220483641556,56.541914498141274,52.75324483775812,62.99597989949749,73.17236363636363,112.54,72.19428571428571]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.5350000858306885,3.0749999284744263,200.1500015258789,-2.0,-2.0,205.9499969482422,-2.0,-2.0,5.315000057220459,217.9499969482422,-2.0,-2.0,5.355000019073486,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.90464999999994,27.587981293842567,20.145723270440243,13.7336,23.656009732360104,34.90370942812985,28.64802816901407,39.79796143250688,59.15470013947001,49.20503333333334,43.12527173913045,58.8487931034483,66.3127338129496,102.60615384615386,65.14487623762375]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.365000009536743,2.6850000619888306,200.3499984741211,-2.0,-2.0,209.4499969482422,-2.0,-2.0,5.255000114440918,4.375,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.04173500000002,26.28951757972201,17.443752577319575,10.971965317919079,21.032275641025645,32.10279132791327,27.832369942196525,35.8720918367347,59.1137580437581,50.28872521246458,132.06000000000003,48.87481268011528,66.46101415094341,66.1634278959811,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.805000066757202,3.0749999284744263,200.1500015258789,-2.0,-2.0,208.4499969482422,-2.0,-2.0,5.934999942779541,5.315000057220459,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.028989999999965,29.466305454545513,22.02796583850931,15.225360824742264,24.960644444444437,36.01937072503418,29.69272727272727,41.5511282051282,60.06689599999997,55.02503562945369,49.67592391304346,59.17793248945148,70.47191176470588,69.87157635467979,192.34]},{"f":[3,3,0,-2,-2,1,-2,-2,3,3,-2,-2,3,-2,-2],"t":[4.615000009536743,3.1750000715255737,200.1500015258789,-2.0,-2.0,120.25,-2.0,-2.0,5.330000162124634,4.625,-2.0,-2.0,5.3450000286102295,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.51329999999999,28.06259347653143,21.349708588957068,15.437512195121949,24.061118568232654,35.29697520661157,220.45,34.99043046357621,58.88549125168242,49.383706070287545,112.55999999999999,48.358116883116864,65.80190697674418,224.44333333333336,64.68733021077286]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.184999942779541,2.625,200.1500015258789,-2.0,-2.0,238.5999984741211,-2.0,-2.0,5.565000057220459,195.6500015258789,-2.0,-2.0,221.5999984741211,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.12347999999991,26.39606666666666,18.35029411764707,11.307951807228916,22.585905797101454,32.24513157894737,31.67799325463743,54.66599999999999,55.29588421052638,48.013870967741944,41.269947368421015,51.22526315789473,67.17706371191142,63.43753036437246,75.27938596491227]},{"f":[3,1,2,-2,-2,3,-2,-2,3,3,-2,-2,3,-2,-2],"t":[4.355000019073486,120.20000076293945,10.009999752044678,-2.0,-2.0,3.125,-2.0,-2.0,5.255000114440918,4.375,-2.0,-2.0,6.3450000286102295,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.8898,28.107268907563007,107.08571428571427,220.44999999999996,22.0625,27.639940828402374,22.723052959501555,33.47476894639556,57.19993827160491,48.44076142131978,108.01333333333332,47.51953608247425,65.49588942307687,63.55457534246574,79.38960784313726]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.585000038146973,2.9850000143051147,200.1500015258789,-2.0,-2.0,206.0,-2.0,-2.0,5.525000095367432,4.625,-2.0,-2.0,190.0500030517578,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.791959999999996,28.565097580015635,22.474766666666675,15.252864321608044,26.058703241895245,33.93102790014691,28.083936170212763,38.06355889724311,59.794200278164126,51.69895890410962,102.205,50.27625352112679,68.14098870056498,59.313066666666664,70.51408602150534]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.365000009536743,2.680000066757202,229.9499969482422,-2.0,-2.0,203.5500030517578,-2.0,-2.0,5.93999981880188,4.379999876022339,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.657980000000016,26.402756244616743,17.90182364729458,15.786762589928058,28.65768292682927,32.81055891238671,26.033141762452104,37.22179551122196,58.000429082240736,53.208481012658254,166.80666666666667,52.66667726550078,72.63091787439613,71.46302439024389,192.34]},{"f":[3,3,3,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.525000095367432,3.1750000715255737,2.0749999284744263,-2.0,-2.0,208.4499969482422,-2.0,-2.0,5.934999942779541,218.4000015258789,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.833909999999996,28.354708661417312,23.039658753709205,18.064678111587977,25.66816326530611,34.3653523489933,28.41590909090909,39.09623493975903,59.80457534246581,53.722601156069366,49.118532934131736,62.03481081081083,74.76450236966821,74.20461904761902,192.34]},{"f":[3,3,0,-2,-2,1,-2,-2,3,1,-2,-2,0,-2,-2],"t":[4.184999942779541,2.7949999570846558,203.9499969482422,-2.0,-2.0,120.29999923706055,-2.0,-2.0,5.255000114440918,177.4499969482422,-2.0,-2.0,239.45000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.96071499999992,26.01638864241348,18.754702495201524,12.046111111111117,22.867089783281724,32.25952145214523,104.18199999999999,31.661164725457578,55.67120274914092,47.04806306306308,45.62413145539911,80.74777777777778,64.5958508158508,64.29738317757007,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.615000009536743,2.8149999380111694,202.25,-2.0,-2.0,209.5500030517578,-2.0,-2.0,5.565000057220459,4.625,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.83613999999999,27.89977011494252,19.457370304114498,11.476650485436897,24.114674220963167,34.22591152815012,30.076068376068356,37.91349367088607,59.37133812949641,51.07710743801654,141.52,50.32341666666666,68.44003012048192,67.6891212121212,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,2,-2,-2,0,-2,-2],"t":[4.525000095367432,2.625,200.3499984741211,-2.0,-2.0,220.5,-2.0,-2.0,5.275000095367432,8.025000095367432,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.59242500000005,28.52560490045942,20.910922431865796,11.380545454545455,25.951025641025627,32.90703256936069,29.733267148014427,39.30072727272728,60.4184582132565,49.91588235294118,146.18,49.245052264808336,67.9128888888889,67.60490099009903,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,3,-2,-2],"t":[4.615000009536743,3.0749999284744263,200.1500015258789,-2.0,-2.0,204.75,-2.0,-2.0,5.255000114440918,4.625,-2.0,-2.0,6.335000038146973,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.042235000000005,27.716189747513425,21.233458528951488,15.652877358490565,24.004145199063235,33.9174850299401,28.35872852233678,38.20819628647213,60.40318903318901,49.081973094170415,125.36500000000001,47.688675799086774,65.77474468085106,62.93485221674882,83.79031250000001]},{"f":[3,3,1,-2,-2,1,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.525000095367432,2.8249999284744263,168.1500015258789,-2.0,-2.0,120.25,-2.0,-2.0,5.315000057220459,223.5,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.354285000000004,28.616014669926642,20.34087378640777,17.44965675057208,36.53910256410257,34.60154494382023,98.86,34.055439093484395,58.986701164294985,50.91148036253776,44.85720164609051,67.62954545454545,65.03398190045249,64.745306122449,192.34]},{"f":[3,3,0,-2,-2,3,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.585000038146973,2.7949999570846558,201.95000457763672,-2.0,-2.0,3.6450001001358032,-2.0,-2.0,5.255000114440918,215.3499984741211,-2.0,-2.0,233.5500030517578,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.39466000000003,28.54262015503874,19.55135283363803,11.318445595854923,24.039915254237286,35.162032301480494,30.33775316455696,38.73222482435598,59.11174647887326,48.584855072463775,44.044223602484465,54.94173913043479,65.80626728110593,63.597688172042965,79.05774193548388]},{"f":[3,3,0,-2,-2,1,-2,-2,3,1,-2,-2,0,-2,-2],"t":[4.335000038146973,2.7949999570846558,202.29999542236328,-2.0,-2.0,120.29999923706055,-2.0,-2.0,5.275000095367432,177.4000015258789,-2.0,-2.0,221.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.42766999999999,27.318691588785054,19.73607766990291,13.904278350515467,23.26059190031154,33.21755287009065,74.7042857142857,32.77418320610687,59.17526123936818,50.759453551912536,48.43052785923754,82.52600000000001,65.91527352297597,61.886430678466084,77.48966101694917]},{"f":[3,3,0,-2,-2,0,-2,-2,3,2,-2,-2,3,-2,-2],"t":[4.295000076293945,3.0749999284744263,200.1500015258789,-2.0,-2.0,203.79999542236328,-2.0,-2.0,5.255000114440918,8.045000076293945,-2.0,-2.0,6.444999933242798,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.123199999999976,27.318497409326437,21.205123558484345,12.663270142180096,25.75646464646464,34.05319419237747,28.32722727272726,37.858972809667684,57.73346793349172,47.060883838383866,146.18,46.55774111675129,67.20957399103139,65.79948356807512,97.24449999999999]},{"f":[3,3,0,-2,-2,0,-2,-2,3,2,-2,-2,0,-2,-2],"t":[4.335000038146973,2.6950000524520874,230.1999969482422,-2.0,-2.0,201.75,-2.0,-2.0,5.275000095367432,9.039999961853027,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.718129999999995,26.819135371179037,18.000108932461877,15.71919060052219,29.49473684210526,32.71991253644315,26.376943231441047,35.89833698030634,56.992222222222274,48.0397493734336,62.86052631578948,45.569619883040936,64.82563596491227,64.5453846153846,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.585000038146973,3.3850001096725464,202.4499969482422,-2.0,-2.0,226.5500030517578,-2.0,-2.0,5.315000057220459,223.54999542236328,-2.0,-2.0,5.355000019073486,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.60242999999996,27.68741064336779,22.123374655647375,15.50690476190476,25.640991561181433,35.266191369606005,32.99160671462829,43.44293103448275,59.846707152496585,51.32450980392152,47.06727272727272,64.43680000000002,65.84163218390805,104.91833333333334,64.15486810551552]},{"f":[3,3,3,-2,-2,3,-2,-2,3,1,-2,-2,3,-2,-2],"t":[4.615000009536743,3.5649999380111694,2.0749999284744263,-2.0,-2.0,4.184999942779541,-2.0,-2.0,4.625,165.25,-2.0,-2.0,5.795000076293945,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.29452499999998,29.120023094688225,24.397425860023727,15.437488986784144,27.69922077922081,37.85061403508771,34.61710622710621,42.67437158469944,61.00162624821681,148.05999999999997,53.31,337.56,60.25004316546762,54.22155405405405,70.91398406374503]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.509999990463257,2.6350001096725464,200.0500030517578,-2.0,-2.0,203.75,-2.0,-2.0,5.255000114440918,223.5999984741211,-2.0,-2.0,221.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.359029999999976,27.157563694267516,18.582329059829053,12.637323943661976,21.171871165644163,32.25046954314725,26.52886666666666,35.76784836065573,59.957204301075265,50.84360000000001,45.44647321428571,66.75092105263157,66.11504504504508,63.253081761006285,73.33809523809525]},{"f":[3,3,0,-2,-2,1,-2,-2,3,3,-2,-2,3,-2,-2],"t":[4.615000009536743,3.1750000715255737,200.1500015258789,-2.0,-2.0,120.25,-2.0,-2.0,5.775000095367432,4.625,-2.0,-2.0,6.315000057220459,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.01680000000001,29.292724458204336,21.864553706505312,13.95800904977376,25.83579545454546,37.07405705229794,141.134,36.242907348242795,59.58672316384182,52.88654377880184,189.56,52.253796296296315,70.19941605839418,68.16543478260867,80.83159090909092]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.335000038146973,2.6850000619888306,200.1500015258789,-2.0,-2.0,204.75,-2.0,-2.0,5.315000057220459,224.3499984741211,-2.0,-2.0,239.5500030517578,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.52568000000001,25.847443082311734,17.354679911699783,10.613314285714283,21.598345323741004,31.431219158200317,25.895355805243433,34.933767772511835,57.73144522144524,50.24246913580248,45.4334693877551,62.979819819819824,64.42688741721857,63.859645232815964,192.34]},{"f":[3,3,0,-2,-2,3,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.525000095367432,2.084999918937683,218.6500015258789,-2.0,-2.0,2.09499990940094,-2.0,-2.0,5.315000057220459,223.5999984741211,-2.0,-2.0,5.355000019073486,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[41.30413500000001,29.72750609260763,16.48790178571429,11.63277419354839,27.394347826086953,32.672562065541214,533.31,31.17663346613544,59.83577373211961,49.23841614906833,42.671583333333324,68.45841463414635,67.46966442953017,134.57625,66.2467653758542]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.355000019073486,3.125,200.1500015258789,-2.0,-2.0,225.6500015258789,-2.0,-2.0,5.315000057220459,4.375,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.896689999999964,26.719027538726365,20.672432000000004,15.354355555555559,23.663849999999996,33.7564990689013,30.346731234866827,45.11322580645161,58.16929594272077,47.60919315403422,125.24000000000001,46.64841584158415,68.23708624708624,67.36312206572775,192.34]},{"f":[3,3,0,-2,-2,1,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.585000038146973,3.125,229.3499984741211,-2.0,-2.0,120.20000076293945,-2.0,-2.0,5.275000095367432,215.1999969482422,-2.0,-2.0,239.5500030517578,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.42037500000002,27.628911353032663,20.394657097288697,17.829999999999988,29.653823529411767,34.51188163884675,121.30499999999999,34.24767123287676,60.658221288515435,48.9142205323194,44.56925465838511,55.77245098039219,67.50671840354768,66.67078124999998,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,3,-2,-2],"t":[4.585000038146973,3.1750000715255737,200.1500015258789,-2.0,-2.0,191.6500015258789,-2.0,-2.0,5.255000114440918,4.625,-2.0,-2.0,5.3450000286102295,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.850309999999965,28.006706634692286,21.5836712749616,14.234541284403676,25.28369515011547,34.975700000000025,27.114436090225563,37.214561027837256,59.631815754339065,48.52704467353951,79.28666666666666,47.20405017921146,66.68746724890832,94.9188888888889,64.91890951276106]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.694999933242798,2.7949999570846558,200.3499984741211,-2.0,-2.0,220.4000015258789,-2.0,-2.0,5.255000114440918,215.75,-2.0,-2.0,6.3399999141693115,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.35442000000002,27.52878951426372,19.45520522388058,12.737771739130432,22.966590909090908,33.21530880420502,30.233417475728135,39.4578861788618,58.327169274537674,48.325083333333325,43.42134228187918,56.35428571428572,63.51183585313169,61.736658536585345,77.24433962264149]},{"f":[3,3,0,-2,-2,0,-2,-2,3,2,-2,-2,3,-2,-2],"t":[4.184999942779541,3.1750000715255737,230.3499984741211,-2.0,-2.0,208.4499969482422,-2.0,-2.0,5.315000057220459,8.019999980926514,-2.0,-2.0,5.3450000286102295,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.56116999999996,25.172403587443956,19.8730534351145,17.38727440147329,31.924642857142857,32.71821739130434,27.38947867298577,37.23373493975902,57.68938983050845,47.80225663716818,146.18,47.36502222222226,68.01036951501156,169.7842857142857,66.33802816901411]},{"f":[3,3,1,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.484999895095825,2.7949999570846558,153.5999984741211,-2.0,-2.0,209.4499969482422,-2.0,-2.0,5.325000047683716,224.1999969482422,-2.0,-2.0,5.3450000286102295,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.26970499999996,27.809385113268597,20.384183486238555,16.92114114114115,25.823773584905652,33.66573082489147,29.179311475409815,37.21069948186529,60.42802356020938,51.43438805970148,44.458995815899584,68.80020833333334,67.45102564102565,158.94142857142856,65.93341232227495]},{"f":[3,3,0,-2,-2,1,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.765000104904175,3.1750000715255737,211.0,-2.0,-2.0,120.25,-2.0,-2.0,5.315000057220459,4.775000095367432,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.19784999999995,29.256308518802758,20.65231012658226,16.135740740740733,25.403506493506498,37.36022354694491,123.30499999999999,36.58478195488723,60.65241032998567,48.447028112449786,106.29,47.502653061224485,67.43620535714285,67.15677852348995,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.255000114440918,2.6350001096725464,227.3499984741211,-2.0,-2.0,208.4499969482422,-2.0,-2.0,5.275000095367432,223.54999542236328,-2.0,-2.0,5.355000019073486,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.023660000000035,25.708148148148172,17.845311111111094,15.54188202247191,26.568936170212766,31.324460317460357,26.395844155844166,36.03878881987579,56.828826086956525,47.28297826086957,44.22051359516615,55.14093023255815,66.3746739130435,86.28387096774196,64.93601398601402]},{"f":[3,3,3,-2,-2,1,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.585000038146973,3.2350000143051147,2.084999918937683,-2.0,-2.0,120.29999923706055,-2.0,-2.0,5.934999942779541,224.1500015258789,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.33205999999998,29.58453840186193,23.268054363376265,17.47054166666667,26.299433551198266,37.06796610169493,220.44999999999996,36.130749574105636,59.81666666666662,54.499251968503906,49.89470108695651,66.60264285714283,73.12330049261084,71.93706467661693,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.255000114440918,2.6850000619888306,202.4499969482422,-2.0,-2.0,219.6500015258789,-2.0,-2.0,5.255000114440918,223.6500015258789,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.28464000000003,26.058185840707985,19.280632653061218,12.030517241379313,23.27278481012658,31.24725,27.79056470588235,38.08023255813953,56.4638275862069,47.28485981308411,43.45591639871383,57.46264957264958,65.35205882352942,64.48425968109343,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,2,-2,-2,3,-2,-2],"t":[4.335000038146973,2.680000066757202,200.0500030517578,-2.0,-2.0,204.1999969482422,-2.0,-2.0,5.335000038146973,8.019999980926514,-2.0,-2.0,5.3450000286102295,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.06038999999997,27.00210217755448,20.4187157894737,11.758642857142856,24.037850746268656,31.35134909596662,25.62826855123675,35.066100917431214,56.92341191066997,48.56717884130984,146.18,47.82393401015232,65.03447432762835,121.97,64.47214814814812]},{"f":[3,3,1,-2,-2,1,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.255000114440918,3.125,168.1500015258789,-2.0,-2.0,120.20000076293945,-2.0,-2.0,5.3450000286102295,223.6500015258789,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.97235499999996,26.53405784399651,20.854430955993923,18.862306238185262,28.960846153846152,34.29935684647302,127.30499999999999,33.91183333333333,55.4940046565774,47.13919463087249,43.919999999999995,55.43184000000001,64.55856796116507,64.24766423357661,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.509999990463257,3.3850001096725464,200.1500015258789,-2.0,-2.0,225.6500015258789,-2.0,-2.0,5.315000057220459,223.5999984741211,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.61444000000001,28.236234309623416,22.312939521800278,14.855546218487396,26.065285412262167,36.93760330578511,33.59768595041323,46.95735537190082,58.989540372670874,50.60341597796145,44.67573076923076,65.56650485436893,65.87678733031674,65.59002267573696,192.34]},{"f":[3,3,0,-2,-2,1,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.359999895095825,2.799999952316284,214.25,-2.0,-2.0,120.20000076293945,-2.0,-2.0,5.315000057220459,4.375,-2.0,-2.0,218.0,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.83985999999996,26.758041666666678,18.459547920433998,13.972475884244366,24.225991735537182,33.850880989180844,125.13333333333333,32.99644305772229,56.962587500000055,47.6702374670185,236.3,47.17121693121695,65.32790973871732,60.88031802120137,74.4486956521739]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.355000019073486,2.6950000524520874,229.75,-2.0,-2.0,204.3499984741211,-2.0,-2.0,5.315000057220459,4.375,-2.0,-2.0,239.70000457763672,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.634915,26.962748487467614,19.540101626016256,17.249717223650386,28.190194174757277,32.45439097744361,27.301762295081957,35.44071258907363,59.39967971530248,49.04938337801613,140.085,48.06254742547426,67.61385106382977,66.54324034334765,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,3,-2,-2],"t":[4.365000009536743,3.125,230.3499984741211,-2.0,-2.0,201.75,-2.0,-2.0,5.335000038146973,4.375,-2.0,-2.0,5.3450000286102295,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[38.674514999999964,26.51193765796125,20.448295819935687,17.99291585127201,31.751891891891898,33.18730973451328,26.49507246376811,37.05684357541899,56.43217712177122,47.74744360902259,115.91600000000001,46.88236040609139,64.80224637681158,303.42,63.643907766990246]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.365000009536743,2.9850000143051147,202.29999542236328,-2.0,-2.0,201.75,-2.0,-2.0,5.555000066757202,4.375,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.470339999999965,27.706322907861377,21.433613595706607,14.772378378378377,24.728609625668426,33.32562499999999,26.69330434782607,37.197284263959396,58.9523867809058,51.65380645161294,155.26000000000005,50.52765217391301,68.59397727272732,67.88685714285715,192.34]},{"f":[3,3,0,-2,-2,0,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.585000038146973,2.90500009059906,202.29999542236328,-2.0,-2.0,196.5500030517578,-2.0,-2.0,5.934999942779541,4.625,-2.0,-2.0,221.4499969482422,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.90579500000001,28.373435054773083,19.65722532588455,13.272663043478257,22.98515580736543,34.69004048582998,28.177912621359216,37.197514018691585,60.31903047091412,54.84740530303029,112.3509090909091,53.623926499032905,75.21087628865976,69.99034965034966,89.84882352941176]},{"f":[3,3,0,-2,-2,1,-2,-2,3,3,-2,-2,0,-2,-2],"t":[4.365000009536743,3.3850001096725464,200.1500015258789,-2.0,-2.0,120.25,-2.0,-2.0,5.569999933242798,4.375,-2.0,-2.0,239.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.969354999999965,26.74986737400532,22.47359731543624,16.09803921568627,25.791489795918363,35.00329015544042,127.30499999999999,34.52255208333334,57.17446490218639,48.63654761904763,137.94,48.280756972111554,68.96380821917806,68.62486263736263,192.34]},{"f":[3,3,1,-2,-2,0,-2,-2,3,1,-2,-2,3,-2,-2],"t":[4.355000019073486,2.9850000143051147,168.1500015258789,-2.0,-2.0,210.5999984741211,-2.0,-2.0,5.315000057220459,177.0,-2.0,-2.0,5.3450000286102295,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.480474999999984,25.533525243578417,19.3401413427562,17.00152719665273,32.04306818181817,31.759911190053284,26.2931448763251,37.285250000000005,59.85487944890927,52.17747474747475,48.714725274725254,91.56625000000001,66.25541052631581,105.763,65.40578494623654]},{"f":[3,3,1,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.5350000858306885,3.1750000715255737,168.1500015258789,-2.0,-2.0,204.75,-2.0,-2.0,5.315000057220459,224.04999542236328,-2.0,-2.0,218.25,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.697154999999924,28.072347684809102,21.277534246575343,18.991758241758237,32.52108108108108,35.84968641114985,29.520131578947364,40.020606936416186,58.30591677503247,49.862402597402586,45.1887330316742,61.734597701149454,63.947136659436005,60.295844155844165,71.29745098039218]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,0,-2,-2],"t":[4.255000114440918,2.6350001096725464,230.0999984741211,-2.0,-2.0,204.75,-2.0,-2.0,5.275000095367432,224.3499984741211,-2.0,-2.0,221.6500015258789,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.135889999999996,26.554214729370013,17.95798672566371,15.873385416666656,29.729852941176468,32.31050370370371,27.527179487179488,35.55888059701493,57.669163802978275,48.89227678571427,45.046574923547425,59.28520661157026,66.92103529411764,62.198803986710914,78.38387096774193]},{"f":[3,3,0,-2,-2,0,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.585000038146973,3.1450001001358032,214.1500015258789,-2.0,-2.0,208.4499969482422,-2.0,-2.0,5.565000057220459,222.04999542236328,-2.0,-2.0,5.585000038146973,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.489110000000004,27.0422344610543,20.836520325203274,16.44192878338279,26.16377697841726,32.86009146341463,27.874479495268126,37.52215339233036,61.19004115226335,52.603183023872695,46.70563432835821,67.10357798165141,70.38676136363637,130.405,69.34598265895956]},{"f":[3,3,0,-2,-2,1,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.525000095367432,3.1750000715255737,202.29999542236328,-2.0,-2.0,120.25,-2.0,-2.0,5.255000114440918,215.8499984741211,-2.0,-2.0,6.275000095367432,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[39.42249499999997,27.841540284360182,21.64960235640647,14.90649350649352,25.126517857142854,35.00393526405452,127.30499999999999,34.68837606837607,59.39727520435966,48.21527397260274,42.68891428571427,56.481196581196585,66.78447963800899,64.01290760869568,80.56743243243244]},{"f":[3,3,1,-2,-2,1,-2,-2,3,0,-2,-2,3,-2,-2],"t":[4.295000076293945,2.625,168.04999542236328,-2.0,-2.0,120.20000076293945,-2.0,-2.0,5.775000095367432,218.4000015258789,-2.0,-2.0,6.335000038146973,-2.0,-2.0],"l":[1,2,3,-1,-1,6,-1,-1,9,10,-1,-1,13,-1,-1],"r":[8,5,4,-1,-1,7,-1,-1,12,11,-1,-1,14,-1,-1],"v":[40.428455,28.295074889867855,21.506554809843387,17.97093833780161,39.327972972972965,32.705639534883694,94.33999999999999,32.16340175953079,56.34913294797692,50.66537067545303,45.90261083743844,60.28567164179107,69.72139534883713,67.05928229665072,81.07612244897959]}]}},"rutas":{"n_raw":1030,"n_limpio":1016,"duplicados":14,"nulos":{"distance_km":49,"order_weight_kg":50,"vehicle_utilization_ratio":50,"average_speed_kmph":49,"fuel_cost_per_km":50,"driver_cost_per_hour":50},"n_features":16,"n_train":812,"n_test":204,"metricas":[{"modelo":"Árbol de Decisión","mae":15.0636,"r2":0.8788,"rmse":24.3039,"config":"max_depth=5","cv_r2":0.864},{"modelo":"Red Neuronal","mae":18.8976,"rmse":27.568,"r2":0.844,"config":"Keras, capas densas + ReLU","cv_r2":null},{"modelo":"KNN","mae":28.279,"r2":0.5411,"rmse":47.2844,"config":"k=7","cv_r2":0.6141}],"importancias":[{"variable":"average_speed_kmph","valor":0.5035},{"variable":"distance_km","valor":0.4878},{"variable":"delivery_time_window_hrs","valor":0.0064},{"variable":"time_of_day","valor":0.001},{"variable":"weather_impact_index","valor":0.0008},{"variable":"fuel_cost_total","valor":0.0005}],"dispersion":[[86.98,102.58],[46.08,61.65],[64.69,79.73],[78.29,79.73],[51.87,61.65],[111.78,114.97],[17.89,26.63],[24.79,36.92],[21.66,26.63],[86.96,114.97],[53.56,61.65],[272.17,302.0],[30.12,36.92],[81.79,56.03],[29.76,29.98],[59.8,39.23],[13.83,10.81],[19.4,29.98],[16.38,16.9],[25.04,26.63],[124.3,114.97],[136.45,114.97],[53.02,57.23],[37.33,39.23],[54.83,50.62],[86.28,80.63],[11.43,16.9],[72.76,61.65],[37.13,39.23],[128.12,114.97],[4.58,10.81],[9.2,10.81],[88.66,80.63],[11.38,16.9],[47.13,50.62],[76.61,114.97],[31.69,57.23],[33.12,26.63],[94.3,101.58],[401.74,302.0],[74.58,50.62],[55.51,61.65],[52.78,50.62],[15.92,16.9],[174.02,189.85],[208.74,130.58],[35.04,29.98],[105.97,117.56],[18.7,14.51],[15.05,16.9],[22.52,26.63],[53.21,61.65],[257.04,222.9],[37.33,39.23],[282.57,258.3],[198.06,130.58],[139.51,130.58],[10.94,16.9],[23.5,16.9],[7.16,4.91],[64.33,61.65],[26.46,16.9],[131.82,150.38],[80.38,61.65],[5.02,10.81],[100.58,117.56],[31.99,36.92],[75.17,79.73],[157.95,169.22],[19.98,10.81],[34.14,36.92],[34.05,36.92],[42.84,36.92],[68.98,61.65],[15.07,16.9],[96.2,114.97],[215.19,169.22],[56.44,39.23],[192.51,150.38],[77.22,61.65],[105.61,114.97],[103.26,79.73],[37.54,50.62],[223.82,189.85],[96.66,114.97],[28.22,26.63],[176.4,194.51],[19.23,39.23],[152.05,169.22],[19.57,26.63],[81.96,80.63],[84.11,80.63],[53.45,61.65],[76.81,61.65],[115.3,114.97],[60.8,61.65],[79.12,114.97],[107.18,114.97],[12.84,10.81],[22.29,29.98],[332.23,302.0],[117.46,150.38],[6.16,10.81],[132.83,150.38],[73.77,79.73],[48.97,36.92],[42.37,39.23],[13.78,80.63],[127.96,117.56],[5.33,4.91],[29.99,50.62],[323.78,302.0],[147.23,114.97],[272.49,258.3],[106.4,130.58],[286.9,130.58],[83.93,79.73],[70.19,61.65],[15.32,10.81],[135.37,102.58],[7.49,4.91],[50.73,39.23],[23.77,26.63],[105.68,79.73],[25.32,29.98],[117.89,102.58],[4.14,80.63],[15.82,10.81],[40.39,39.23],[112.64,150.38],[89.23,66.16],[35.02,26.63],[47.95,39.23],[34.06,26.63],[45.51,39.23],[28.42,36.92],[28.29,26.63],[114.29,80.63],[103.0,79.73],[22.75,26.63],[173.44,194.51],[22.91,16.9],[3.72,4.91],[45.71,50.62],[57.71,80.63],[147.59,169.22],[60.84,61.65],[44.66,56.03],[35.35,50.62],[16.47,16.9],[172.03,150.38],[32.38,36.92],[96.38,56.03],[3.17,80.63],[10.12,16.9],[1.43,4.91],[11.72,39.23],[70.7,101.58],[32.78,26.63],[9.53,16.9],[63.03,61.65],[112.42,114.97],[142.13,150.38],[76.23,66.16],[9.94,80.63],[36.66,50.62],[7.59,10.81],[42.38,57.23],[6.33,10.81],[108.16,117.56],[37.02,39.23],[100.23,80.63],[45.45,80.63],[83.95,61.65],[87.35,130.58],[20.03,26.63],[100.76,80.63],[121.78,114.97],[26.2,29.98],[39.23,50.62],[36.91,36.92],[76.86,114.97],[24.51,26.63],[6.96,14.51],[58.25,101.58],[6.8,4.91],[15.94,16.9],[172.23,224.36],[118.86,117.56],[152.92,150.38],[19.36,16.9],[17.44,16.9],[33.61,36.92],[251.02,224.36],[24.26,26.63],[98.95,130.58],[12.74,10.81],[193.69,194.51],[110.71,80.63],[139.68,114.97],[150.87,150.38],[2.34,4.91],[70.97,80.63],[28.48,36.92]],"spearman_dist_costo":0.8358}}</script>
+
+<script>
+(function () {
+  "use strict";
+
+  const D = JSON.parse(document.getElementById("payload").textContent);
+  const tip = document.getElementById("tip");
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const fmt = (v, d) => Number(v).toFixed(d === undefined ? 2 : d);
+
+  /* ------------------------------------------------------------- tooltip */
+  function showTip(evt, html) {
+    tip.innerHTML = html;
+    tip.classList.add("on");
+    const pad = 12;
+    let x = evt.clientX + pad;
+    let y = evt.clientY + pad;
+    const r = tip.getBoundingClientRect();
+    if (x + r.width > innerWidth - 6) x = evt.clientX - r.width - pad;
+    if (y + r.height > innerHeight - 6) y = evt.clientY - r.height - pad;
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+  }
+  function hideTip() { tip.classList.remove("on"); }
+
+  const NS = "http://www.w3.org/2000/svg";
+  function el(name, attrs, parent) {
+    const n = document.createElementNS(NS, name);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+
+  /* --------------------------------------------------- horizontal bars */
+  function barChart(svgId, rows, opts) {
+    const o = Object.assign({ max: null, decimals: 3, pct: false, gutter: 132 }, opts || {});
+    const svg = document.getElementById(svgId);
+    svg.textContent = "";
+    const rowH = 34, padT = 20, padB = 26, padR = 58;
+    const w = 640, h = padT + rows.length * rowH + padB;
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.style.maxHeight = h + 40 + "px";
+
+    const x0 = o.gutter, x1 = w - padR;
+    const max = o.max !== null ? o.max : Math.max.apply(null, rows.map((r) => r.value)) * 1.05;
+    const sx = (v) => x0 + (v / max) * (x1 - x0);
+
+    const ticks = [0, max / 2, max];
+    ticks.forEach((t) => {
+      el("line", { x1: sx(t), x2: sx(t), y1: padT - 6, y2: h - padB,
+                   class: t === 0 ? "axis" : "grid-line" }, svg);
+      const lab = el("text", { x: sx(t), y: h - padB + 15,
+                               "text-anchor": t === 0 ? "start" : "middle" }, svg);
+      lab.textContent = o.pct ? Math.round(t * 100) + "%" : fmt(t, t === 0 ? 0 : 2);
+    });
+
+    rows.forEach((r, i) => {
+      const cy = padT + i * rowH + rowH / 2;
+      const bh = 15;
+      const name = el("text", { x: x0 - 10, y: cy + 4, "text-anchor": "end", class: "lbl" }, svg);
+      name.textContent = r.label;
+
+      const bw = Math.max(sx(r.value) - x0, 1);
+      const bar = el("rect", { x: x0, y: cy - bh / 2, width: bw, height: bh,
+                               fill: r.color || css("--signal"), class: "bar", rx: 1 }, svg);
+
+      const v = el("text", { x: x0 + bw + 8, y: cy + 4, class: "val" }, svg);
+      v.textContent = o.pct ? fmt(r.value * 100, 1) + "%" : fmt(r.value, o.decimals);
+
+      const hit = el("rect", { x: x0, y: cy - rowH / 2, width: x1 - x0, height: rowH,
+                               fill: "transparent" }, svg);
+      const body = r.tip || `<b>${r.label}</b><br>${o.pct ? fmt(r.value * 100, 1) + "%" : fmt(r.value, o.decimals)}`;
+      [bar, hit].forEach((t) => {
+        t.addEventListener("mousemove", (e) => { bar.style.opacity = ".78"; showTip(e, body); });
+        t.addEventListener("mouseleave", () => { bar.style.opacity = "1"; hideTip(); });
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------- histogram */
+  function histogram(svgId, counts, edges) {
+    const svg = document.getElementById(svgId);
+    svg.textContent = "";
+    const w = 620, h = 250, padL = 46, padR = 12, padT = 14, padB = 34;
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    const x0 = padL, x1 = w - padR, y0 = h - padB, y1 = padT;
+    const maxC = Math.max.apply(null, counts);
+    const sy = (v) => y0 - (v / maxC) * (y0 - y1);
+    const bw = (x1 - x0) / counts.length;
+
+    [0, 0.5, 1].forEach((f) => {
+      const v = maxC * f;
+      el("line", { x1: x0, x2: x1, y1: sy(v), y2: sy(v),
+                   class: f === 0 ? "axis" : "grid-line" }, svg);
+      const t = el("text", { x: x0 - 8, y: sy(v) + 4, "text-anchor": "end" }, svg);
+      t.textContent = Math.round(v);
+    });
+
+    counts.forEach((cnt, i) => {
+      if (!cnt) return;
+      const bx = x0 + i * bw;
+      const bh = y0 - sy(cnt);
+      const bar = el("rect", { x: bx + 0.6, y: sy(cnt), width: Math.max(bw - 1.2, 0.8),
+                               height: bh, fill: css("--signal"), class: "bar" }, svg);
+      const body = `<b>${fmt(edges[i], 0)} – ${fmt(edges[i + 1], 0)} defectos</b><br>${cnt} lote${cnt === 1 ? "" : "s"}`;
+      bar.addEventListener("mousemove", (e) => showTip(e, body));
+      bar.addEventListener("mouseleave", hideTip);
+    });
+
+    [0, 100, 200, 300, 400, 500].forEach((v) => {
+      const px = x0 + (v / edges[edges.length - 1]) * (x1 - x0);
+      const t = el("text", { x: px, y: h - 12, "text-anchor": "middle" }, svg);
+      t.textContent = v;
+    });
+    const cap = el("text", { x: x1, y: padT + 8, "text-anchor": "end" }, svg);
+    cap.textContent = "cola hasta 533 →";
+  }
+
+  /* ------------------------------------------------------------ scatter */
+  function scatter(svgId, pts, unit) {
+    const svg = document.getElementById(svgId);
+    svg.textContent = "";
+    const w = 420, h = 396, pad = 46;
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    const lo = 0;
+
+    // Unos pocos lotes extremos comprimirían toda la nube contra el origen.
+    // El eje se corta en el percentil 98 y los puntos que quedan fuera se
+    // dibujan en el borde con un marcador propio, sin ocultarlos.
+    const mags = pts.map((p) => Math.max(p[0], p[1])).sort((a, b) => a - b);
+    const q98 = mags[Math.floor(mags.length * 0.98)];
+    const step = q98 > 200 ? 50 : 25;
+    const hi = Math.ceil((q98 * 1.02) / step) * step;
+    const nOut = pts.filter((p) => p[0] > hi || p[1] > hi).length;
+
+    const sx = (v) => pad + (Math.min(v, hi) / hi) * (w - pad - 14);
+    const sy = (v) => (h - pad) - (Math.min(v, hi) / hi) * (h - pad - 14);
+
+    [0, hi / 2, hi].forEach((v) => {
+      el("line", { x1: sx(v), x2: sx(v), y1: sy(lo), y2: sy(hi),
+                   class: v === 0 ? "axis" : "grid-line" }, svg);
+      el("line", { x1: sx(lo), x2: sx(hi), y1: sy(v), y2: sy(v),
+                   class: v === 0 ? "axis" : "grid-line" }, svg);
+      const tx = el("text", { x: sx(v), y: h - pad + 16, "text-anchor": "middle" }, svg);
+      tx.textContent = Math.round(v);
+      const ty = el("text", { x: pad - 8, y: sy(v) + 4, "text-anchor": "end" }, svg);
+      ty.textContent = Math.round(v);
+    });
+
+    el("line", { x1: sx(0), y1: sy(0), x2: sx(hi), y2: sy(hi),
+                 stroke: css("--crit"), "stroke-width": 1.5,
+                 "stroke-dasharray": "5 4" }, svg);
+
+    pts.forEach((p) => {
+      const out = p[0] > hi || p[1] > hi;
+      const body = `<b>real ${fmt(p[0])} ${unit}</b><br>predicho ${fmt(p[1])} ${unit}` +
+                   (out ? "<br>fuera del rango del eje" : "");
+      let c;
+      if (out) {
+        c = el("rect", { x: sx(p[0]) - 3, y: sy(p[1]) - 3, width: 6, height: 6,
+                         fill: css("--crit"), "fill-opacity": .85 }, svg);
+      } else {
+        c = el("circle", { cx: sx(p[0]), cy: sy(p[1]), r: 2.6,
+                           fill: css("--probe"), "fill-opacity": .5, class: "dot" }, svg);
+      }
+      c.addEventListener("mousemove", (e) => {
+        if (!out) { c.setAttribute("r", 5); c.setAttribute("fill-opacity", 1); }
+        showTip(e, body);
+      });
+      c.addEventListener("mouseleave", () => {
+        if (!out) { c.setAttribute("r", 2.6); c.setAttribute("fill-opacity", .5); }
+        hideTip();
+      });
+    });
+
+    if (nOut) {
+      const n = el("text", { x: w - 14, y: 20, "text-anchor": "end",
+                             fill: css("--crit") }, svg);
+      n.textContent = "■ " + nOut + " fuera de rango";
+    }
+
+    const xl = el("text", { x: (sx(0) + sx(hi)) / 2, y: h - 8, "text-anchor": "middle" }, svg);
+    xl.textContent = "real";
+    const yl = el("text", { x: 12, y: (sy(0) + sy(hi)) / 2,
+                            "text-anchor": "middle",
+                            transform: `rotate(-90 12 ${(sy(0) + sy(hi)) / 2})` }, svg);
+    yl.textContent = "predicho";
+  }
+
+  /* -------------------------------------------------------------- table */
+  function table(id, head, rows) {
+    const t = document.getElementById(id);
+    t.textContent = "";
+    const thead = document.createElement("thead");
+    const htr = document.createElement("tr");
+    head.forEach((c, i) => {
+      const th = document.createElement("th");
+      th.textContent = c;
+      if (i > 0) th.style.textAlign = "right";
+      htr.appendChild(th);
+    });
+    thead.appendChild(htr);
+    t.appendChild(thead);
+    const tb = document.createElement("tbody");
+    rows.forEach((r, ri) => {
+      const tr = document.createElement("tr");
+      r.forEach((c, i) => {
+        const td = document.createElement("td");
+        td.textContent = c;
+        if (i > 0) td.className = "num" + (ri === 0 ? " best" : "");
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+  }
+
+  /* ---------------------------------------------- Random Forest en JS */
+  const RF = D.metalx.modelo_rf;
+  function predictRF(x) {
+    let sum = 0;
+    for (let i = 0; i < RF.trees.length; i++) {
+      const t = RF.trees[i];
+      let n = 0;
+      while (t.l[n] !== -1) n = x[t.f[n]] <= t.t[n] ? t.l[n] : t.r[n];
+      sum += t.v[n];
+    }
+    return sum / RF.trees.length;
+  }
+
+  /* ------------------------------------------------------ MetalX: KPIs */
+  const M = D.metalx;
+  const best = M.metricas.reduce((a, b) => (b.r2 > a.r2 ? b : a));
+  document.getElementById("mx-n").textContent = M.n.toLocaleString("es-PE");
+  document.getElementById("mx-r2").innerHTML = fmt(best.r2, 3) + "<small>RNA</small>";
+  document.getElementById("mx-imp").innerHTML =
+    fmt(M.importancias[0].valor * 100, 1) + "<small>%</small>";
+  document.getElementById("mx-skew").textContent = fmt(M.skew, 2);
+
+  const UNITS = {
+    Temp_Matriz_C: "°C",
+    Presion_Inyeccion_Bar: "Bar",
+    Tiempo_Ciclo_s: "s",
+    Vibracion_RMS: "",
+  };
+  const impByVar = {};
+  M.importancias.forEach((r) => { impByVar[r.variable] = r.valor; });
+
+  barChart("mx-imp-chart", M.importancias.map((r) => ({
+    label: r.variable,
+    value: r.valor,
+    color: css("--signal"),
+    tip: `<b>${r.variable}</b><br>importancia ${fmt(r.valor * 100, 1)}%<br>correlación ${fmt(
+      M.correlaciones.find((c) => c.variable === r.variable).valor, 3)}`,
+  })), { pct: true, max: 1, gutter: 168 });
+
+  table("mx-imp-table",
+    ["Variable", "Importancia", "Correlación"],
+    M.importancias.map((r) => [
+      r.variable,
+      fmt(r.valor * 100, 1) + " %",
+      fmt(M.correlaciones.find((c) => c.variable === r.variable).valor, 3),
+    ]));
+
+  barChart("mx-mod-chart", M.metricas.map((m) => ({
+    label: m.modelo.replace(" (RNA)", ""),
+    value: m.r2,
+    color: css("--probe"),
+    tip: `<b>${m.modelo}</b><br>${m.config}<br>R² ${fmt(m.r2, 4)} · MAE ${fmt(m.mae)} · MSE ${fmt(m.mse)}`,
+  })), { max: 0.62, gutter: 132 });
+
+  table("mx-mod-table",
+    ["Modelo", "R²", "MAE", "MSE"],
+    M.metricas.map((m) => [m.modelo, fmt(m.r2, 4), fmt(m.mae), fmt(m.mse)]));
+
+  table("mx-cv-table",
+    ["Modelo", "CV MSE", "Desv."],
+    M.cv.map((c) => [c.modelo, fmt(c.mse), "± " + fmt(c.std)]));
+
+  histogram("mx-hist", M.histograma.conteos, M.histograma.bordes);
+  scatter("mx-scatter", M.dispersion, "u");
+
+  /* ------------------------------------------------- MetalX: simulador */
+  const Q = { p50: M.mediana, p75: 52.94 };
+  const chWrap = document.getElementById("channels");
+  const inputs = [];
+
+  RF.features.forEach((name) => {
+    const r = M.rangos.find((x) => x.variable === name);
+    const step = name === "Vibracion_RMS" ? 0.01 : (name === "Tiempo_Ciclo_s" ? 0.01 : 0.1);
+    const wrap = document.createElement("div");
+    wrap.className = "channel";
+    const pct = fmt(impByVar[name] * 100, 1);
+    wrap.innerHTML =
+      '<label for="in-' + name + '">' +
+        '<span class="ch-name">' + name + '</span>' +
+        '<span class="ch-val"><span data-out="' + name + '"></span> <em>' + UNITS[name] + '</em></span>' +
+      '</label>';
+    const inp = document.createElement("input");
+    inp.type = "range";
+    inp.id = "in-" + name;
+    inp.min = r.min; inp.max = r.max; inp.step = step; inp.value = r.mediana;
+    inp.setAttribute("aria-describedby", "sc-" + name);
+    wrap.appendChild(inp);
+    const scale = document.createElement("div");
+    scale.className = "ch-scale";
+    scale.id = "sc-" + name;
+    scale.innerHTML = "<span>" + r.min + "</span>" +
+      '<span class="ch-weight">peso ' + pct + "%</span>" +
+      "<span>" + r.max + "</span>";
+    wrap.appendChild(scale);
+    chWrap.appendChild(wrap);
+    inputs.push({ name: name, input: inp });
+    inp.addEventListener("input", update);
+  });
+
+  const meter = document.getElementById("meter-svg");
+  function drawMeter(value) {
+    meter.textContent = "";
+    const w = 260, h = 34, y = 13, hh = 9;
+    const hi = 140;
+    const sx = (v) => (Math.min(v, hi) / hi) * w;
+    const segs = [
+      { to: Q.p50, color: css("--good") },
+      { to: Q.p75, color: css("--warn") },
+      { to: hi, color: css("--crit") },
+    ];
+    let from = 0;
+    segs.forEach((s) => {
+      el("rect", { x: sx(from) + (from ? 1 : 0), y: y,
+                   width: Math.max(sx(s.to) - sx(from) - (from ? 1 : 0), 1),
+                   height: hh, fill: s.color, "fill-opacity": .3 }, meter);
+      from = s.to;
+    });
+    const px = sx(value);
+    el("rect", { x: Math.max(px - 1.5, 0), y: y - 4, width: 3, height: hh + 8,
+                 fill: css("--ink") }, meter);
+    const lab = el("text", { x: 0, y: h - 1 }, meter);
+    lab.textContent = "0";
+    const l2 = el("text", { x: sx(Q.p50), y: h - 1, "text-anchor": "middle" }, meter);
+    l2.textContent = fmt(Q.p50, 0);
+    const l3 = el("text", { x: sx(Q.p75), y: h - 1, "text-anchor": "middle" }, meter);
+    l3.textContent = fmt(Q.p75, 0);
+    const l4 = el("text", { x: w, y: h - 1, "text-anchor": "end" }, meter);
+    l4.textContent = "140+";
+  }
+
+  function update() {
+    const vals = inputs.map((i) => parseFloat(i.input.value));
+    inputs.forEach((i, k) => {
+      const out = document.querySelector('[data-out="' + i.name + '"]');
+      out.textContent = fmt(vals[k], i.name === "Temp_Matriz_C" || i.name === "Presion_Inyeccion_Bar" ? 1 : 2);
+    });
+    const p = predictRF(vals);
+    document.getElementById("pred").innerHTML = fmt(p, 1) + "<span> u</span>";
+
+    const band = document.getElementById("band");
+    let cls, txt;
+    if (p < Q.p50) { cls = "low"; txt = "Bajo"; }
+    else if (p < Q.p75) { cls = "mid"; txt = "Medio"; }
+    else { cls = "high"; txt = "Alto"; }
+    band.className = "band " + cls;
+    band.textContent = txt;
+
+    const ratio = p / Q.p50;
+    document.getElementById("compare").innerHTML =
+      "Mediana histórica <b>" + fmt(Q.p50) + "</b> u · esta estimación es <b>" +
+      fmt(ratio) + "×</b> la mediana";
+    drawMeter(p);
+  }
+
+  /* -------------------------------------------------------- Rutas: KPIs */
+  const R = D.rutas;
+  const bestR = R.metricas.reduce((a, b) => (b.r2 > a.r2 ? b : a));
+  document.getElementById("rt-raw").textContent = R.n_raw.toLocaleString("es-PE");
+  document.getElementById("rt-clean").textContent = R.n_limpio.toLocaleString("es-PE");
+  document.getElementById("rt-feat").textContent = R.n_features;
+  document.getElementById("rt-r2").innerHTML = fmt(bestR.r2, 3) + "<small>árbol</small>";
+  document.getElementById("rt-dups").textContent = R.duplicados;
+
+  barChart("rt-mod-chart", R.metricas.map((m) => ({
+    label: m.modelo,
+    value: m.r2,
+    color: css("--probe"),
+    tip: `<b>${m.modelo}</b><br>${m.config}<br>R² ${fmt(m.r2, 4)} · MAE ${fmt(m.mae)} · RMSE ${fmt(m.rmse)}`,
+  })), { max: 1, gutter: 132 });
+
+  table("rt-mod-table",
+    ["Modelo", "R²", "MAE", "RMSE"],
+    R.metricas.map((m) => [m.modelo, fmt(m.r2, 4), fmt(m.mae), fmt(m.rmse)]));
+
+  barChart("rt-imp-chart", R.importancias.map((r) => ({
+    label: r.variable,
+    value: r.valor,
+    color: css("--signal"),
+    tip: `<b>${r.variable}</b><br>importancia ${fmt(r.valor * 100, 2)}%`,
+  })), { pct: true, max: 0.55, gutter: 196 });
+
+  table("rt-imp-table",
+    ["Variable", "Importancia"],
+    R.importancias.map((r) => [r.variable, fmt(r.valor * 100, 2) + " %"]));
+
+  table("rt-null-table",
+    ["Variable", "Nulos", "% del total"],
+    Object.keys(R.nulos).map((k) => [
+      k, R.nulos[k], fmt((R.nulos[k] / R.n_raw) * 100, 2) + " %",
+    ]));
+
+  scatter("rt-scatter", R.dispersion, "min");
+
+  /* --------------------------------------------------------------- tabs */
+  const tabs = [
+    { btn: document.getElementById("tab-metalx"), panel: document.getElementById("p-metalx") },
+    { btn: document.getElementById("tab-rutas"), panel: document.getElementById("p-rutas") },
+  ];
+  tabs.forEach((t, i) => {
+    t.btn.addEventListener("click", () => select(i));
+    t.btn.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        select((i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length, true);
+      }
+    });
+  });
+  function select(idx, focus) {
+    tabs.forEach((t, i) => {
+      t.btn.setAttribute("aria-selected", String(i === idx));
+      t.panel.hidden = i !== idx;
+    });
+    if (focus) tabs[idx].btn.focus();
+  }
+
+  /* --------------------------------- redibujar al cambiar de tema */
+  const repaint = () => {
+    barChart("mx-imp-chart", M.importancias.map((r) => ({
+      label: r.variable, value: r.valor, color: css("--signal"),
+      tip: `<b>${r.variable}</b><br>importancia ${fmt(r.valor * 100, 1)}%`,
+    })), { pct: true, max: 1, gutter: 168 });
+    barChart("mx-mod-chart", M.metricas.map((m) => ({
+      label: m.modelo.replace(" (RNA)", ""), value: m.r2, color: css("--probe"),
+      tip: `<b>${m.modelo}</b><br>R² ${fmt(m.r2, 4)}`,
+    })), { max: 0.62, gutter: 132 });
+    histogram("mx-hist", M.histograma.conteos, M.histograma.bordes);
+    scatter("mx-scatter", M.dispersion, "u");
+    barChart("rt-mod-chart", R.metricas.map((m) => ({
+      label: m.modelo, value: m.r2, color: css("--probe"),
+      tip: `<b>${m.modelo}</b><br>R² ${fmt(m.r2, 4)}`,
+    })), { max: 1, gutter: 132 });
+    barChart("rt-imp-chart", R.importancias.map((r) => ({
+      label: r.variable, value: r.valor, color: css("--signal"),
+      tip: `<b>${r.variable}</b><br>${fmt(r.valor * 100, 2)}%`,
+    })), { pct: true, max: 0.55, gutter: 196 });
+    scatter("rt-scatter", R.dispersion, "min");
+    update();
+  };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", repaint);
+  new MutationObserver(repaint).observe(document.documentElement, {
+    attributes: true, attributeFilter: ["data-theme"],
+  });
+
+  update();
+})();
+</script>

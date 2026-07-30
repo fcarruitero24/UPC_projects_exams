@@ -1,0 +1,1117 @@
+<title>Panel de Resultados — ML en Procesos Industriales</title>
+
+<style>
+  :root {
+    color-scheme: light;
+    --ground:   #eef1f0;
+    --panel:    #fbfcfb;
+    --panel-2:  #f4f7f5;
+    --ink:      #101617;
+    --ink-mid:  #414b49;
+    --ink-dim:  #5f6a68;
+    --rule:     #d6dcda;
+    --rule-2:   #e6eae8;
+    --signal:   #eb6834;
+    --probe:    #2a78d6;
+    --good:     #0ca30c;
+    --warn:     #b07600;
+    --crit:     #d03b3b;
+    --shadow:   0 1px 2px rgba(16, 22, 23, .06);
+
+    --f-display: "Arial Narrow", "Helvetica Neue Condensed", "Liberation Sans Narrow", "Nimbus Sans Narrow", system-ui, sans-serif;
+    --f-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-data: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --ground:   #121618;
+      --panel:    #1c2124;
+      --panel-2:  #232a2d;
+      --ink:      #eaeeec;
+      --ink-mid:  #b3bdba;
+      --ink-dim:  #8e9895;
+      --rule:     #2b3235;
+      --rule-2:   #242b2e;
+      --signal:   #d95926;
+      --probe:    #3987e5;
+      --good:     #0ca30c;
+      --warn:     #fab219;
+      --crit:     #e05d5d;
+      --shadow:   0 1px 2px rgba(0, 0, 0, .3);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground:   #121618;
+    --panel:    #1c2124;
+    --panel-2:  #232a2d;
+    --ink:      #eaeeec;
+    --ink-mid:  #b3bdba;
+    --ink-dim:  #8e9895;
+    --rule:     #2b3235;
+    --rule-2:   #242b2e;
+    --signal:   #d95926;
+    --probe:    #3987e5;
+    --good:     #0ca30c;
+    --warn:     #fab219;
+    --crit:     #e05d5d;
+    --shadow:   0 1px 2px rgba(0, 0, 0, .3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px 72px; }
+
+  /* ---------------------------------------------------------- nameplate --- */
+  .nameplate {
+    border-bottom: 1px solid var(--rule);
+    background: var(--panel);
+    margin-bottom: 28px;
+  }
+  .nameplate-inner {
+    max-width: 1180px; margin: 0 auto; padding: 26px 20px 0;
+    display: flex; flex-wrap: wrap; gap: 20px;
+    align-items: flex-end; justify-content: space-between;
+  }
+  .eyebrow {
+    font-family: var(--f-data);
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-dim); margin: 0 0 6px;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-size: clamp(30px, 5vw, 46px);
+    line-height: 1.02; letter-spacing: -.005em;
+    text-transform: uppercase; font-weight: 700;
+    margin: 0 0 4px; text-wrap: balance;
+  }
+  .byline { color: var(--ink-dim); font-size: 13.5px; margin: 0 0 22px; }
+  .byline strong { color: var(--ink-mid); font-weight: 600; }
+
+  /* ------------------------------------------------------------- tabs ---- */
+  .tabs { display: flex; gap: 2px; margin-bottom: -1px; }
+  .tab {
+    font-family: var(--f-display);
+    text-transform: uppercase; letter-spacing: .05em;
+    font-size: 15px; font-weight: 700;
+    padding: 11px 20px;
+    background: var(--panel-2);
+    color: var(--ink-dim);
+    border: 1px solid var(--rule);
+    border-bottom-color: var(--rule);
+    cursor: pointer;
+    position: relative;
+    transition: color .15s, background .15s;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] {
+    background: var(--ground);
+    color: var(--ink);
+    border-bottom-color: var(--ground);
+  }
+  .tab[aria-selected="true"]::before {
+    content: ""; position: absolute; inset: -1px -1px auto -1px; height: 3px;
+    background: var(--signal);
+  }
+  .tab:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; z-index: 2; }
+
+  /* ------------------------------------------------------- stat strip ---- */
+  .readout {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    border: 1px solid var(--rule); background: var(--panel);
+    box-shadow: var(--shadow); margin-bottom: 22px;
+  }
+  .readout > div {
+    padding: 15px 18px;
+    border-right: 1px solid var(--rule-2);
+  }
+  .readout > div:last-child { border-right: 0; }
+  .readout dt {
+    font-family: var(--f-data);
+    font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-dim); margin: 0 0 5px;
+  }
+  .readout dd {
+    margin: 0; font-family: var(--f-data);
+    font-size: 25px; font-weight: 600; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums; line-height: 1.1;
+  }
+  .readout dd small {
+    font-size: 12px; font-weight: 400; color: var(--ink-dim);
+    letter-spacing: 0; margin-left: 3px;
+  }
+
+  /* ----------------------------------------------------------- panels ---- */
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+  .panel {
+    grid-column: span 12;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+    min-width: 0;
+  }
+  .span-6 { grid-column: span 6; }
+  .span-7 { grid-column: span 7; }
+  .span-5 { grid-column: span 5; }
+  @media (max-width: 880px) {
+    .span-6, .span-7, .span-5 { grid-column: span 12; }
+  }
+
+  .panel-head {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--rule);
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  }
+  .panel-head h2 {
+    font-family: var(--f-display);
+    text-transform: uppercase; letter-spacing: .045em;
+    font-size: 16px; font-weight: 700; margin: 0;
+  }
+  .panel-head .note {
+    font-family: var(--f-data); font-size: 11px;
+    color: var(--ink-dim); letter-spacing: .04em;
+    margin-left: auto;
+  }
+  .panel-body { padding: 18px; }
+  .panel-body > p:first-child { margin-top: 0; }
+  .panel-body > p:last-child { margin-bottom: 0; }
+  .panel-body p { max-width: 68ch; color: var(--ink-mid); }
+
+  /* ------------------------------------------------------- simulator ---- */
+  .sim { display: grid; grid-template-columns: 1fr 300px; gap: 0; }
+  @media (max-width: 880px) { .sim { grid-template-columns: 1fr; } }
+
+  .channels { padding: 18px; display: flex; flex-direction: column; gap: 17px; }
+  .channel label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 10px; margin-bottom: 7px;
+  }
+  .ch-name {
+    font-family: var(--f-data); font-size: 11.5px;
+    letter-spacing: .06em; color: var(--ink-mid);
+  }
+  .ch-val {
+    font-family: var(--f-data); font-size: 15px; font-weight: 600;
+    font-variant-numeric: tabular-nums; color: var(--ink);
+  }
+  .ch-val em { font-style: normal; font-size: 11px; color: var(--ink-dim); }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 20px; background: transparent; margin: 0; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px; background: var(--rule); border-radius: 0;
+  }
+  input[type="range"]::-moz-range-track {
+    height: 4px; background: var(--rule);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 13px; height: 20px; margin-top: -8px;
+    background: var(--ink); border: 0; border-radius: 1px;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 13px; height: 20px; border: 0; border-radius: 1px; background: var(--ink);
+  }
+  input[type="range"]:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+  .ch-scale {
+    display: flex; justify-content: space-between;
+    font-family: var(--f-data); font-size: 10px; color: var(--ink-dim);
+    margin-top: 2px;
+  }
+  .ch-weight {
+    font-family: var(--f-data); font-size: 10px;
+    color: var(--ink-dim); letter-spacing: .04em;
+  }
+
+  .display {
+    border-left: 1px solid var(--rule);
+    background: var(--panel-2);
+    padding: 18px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  @media (max-width: 880px) {
+    .display { border-left: 0; border-top: 1px solid var(--rule); }
+  }
+  .display-label {
+    font-family: var(--f-data); font-size: 10.5px;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--ink-dim);
+  }
+  .big-number {
+    font-family: var(--f-data);
+    font-size: 58px; font-weight: 600; line-height: .95;
+    letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .big-number span { font-size: 17px; color: var(--ink-dim); font-weight: 400; letter-spacing: 0; }
+  .band {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--f-data); font-size: 11.5px; font-weight: 600;
+    letter-spacing: .07em; text-transform: uppercase;
+    padding: 5px 10px; border: 1px solid currentColor; width: fit-content;
+  }
+  .band::before {
+    content: ""; width: 8px; height: 8px; background: currentColor; flex: none;
+  }
+  .band.low { color: var(--good); }
+  .band.mid { color: var(--warn); }
+  .band.high { color: var(--crit); }
+  .meter { display: flex; flex-direction: column; gap: 5px; }
+  .compare {
+    font-size: 12.5px; color: var(--ink-dim); border-top: 1px solid var(--rule);
+    padding-top: 12px; margin-top: auto;
+  }
+  .compare b { color: var(--ink-mid); font-family: var(--f-data); font-variant-numeric: tabular-nums; }
+
+  /* --------------------------------------------------------- charts ----- */
+  .chart { width: 100%; display: block; overflow: visible; }
+  .chart text { font-family: var(--f-data); fill: var(--ink-dim); font-size: 10.5px; }
+  .chart .lbl { fill: var(--ink-mid); font-size: 11.5px; }
+  .chart .val { fill: var(--ink); font-weight: 700; font-size: 12px; }
+  .chart .grid-line { stroke: var(--rule-2); stroke-width: 1; }
+  .chart .axis { stroke: var(--rule); stroke-width: 1; }
+  .bar { transition: opacity .12s; }
+  .dot { transition: r .12s; }
+  .oor { fill: var(--crit); }
+
+  .tip {
+    position: fixed; z-index: 50; pointer-events: none;
+    background: var(--ink); color: var(--panel);
+    font-family: var(--f-data); font-size: 11.5px; line-height: 1.5;
+    padding: 6px 9px; white-space: nowrap;
+    opacity: 0; transition: opacity .1s;
+  }
+  .tip.on { opacity: 1; }
+  .tip b { color: var(--panel); }
+
+  .legend {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    font-family: var(--f-data); font-size: 11px; color: var(--ink-mid);
+    margin-bottom: 12px;
+  }
+  .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; }
+
+  /* ---------------------------------------------------------- tables ---- */
+  details.data { margin-top: 14px; border-top: 1px solid var(--rule-2); }
+  details.data summary {
+    font-family: var(--f-data); font-size: 10.5px;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim);
+    cursor: pointer; padding: 9px 0 0; list-style: none;
+  }
+  details.data summary::-webkit-details-marker { display: none; }
+  details.data summary::before { content: "+ "; }
+  details.data[open] summary::before { content: "− "; }
+  details.data summary:hover { color: var(--ink); }
+  details.data summary:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+  .scroll-x { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 10px; }
+  th, td {
+    text-align: left; padding: 7px 12px 7px 0;
+    border-bottom: 1px solid var(--rule-2); white-space: nowrap;
+  }
+  th {
+    font-family: var(--f-data); font-size: 10.5px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim);
+  }
+  td.num {
+    font-family: var(--f-data); font-variant-numeric: tabular-nums;
+    text-align: right; padding-right: 16px;
+  }
+  td.best { color: var(--ink); font-weight: 700; }
+
+  /* ----------------------------------------------------------- prose ---- */
+  .finding {
+    border-left: 3px solid var(--signal);
+    padding: 2px 0 2px 16px; margin: 0 0 16px;
+  }
+  .finding p { margin: 0; }
+  .caution { border-left-color: var(--warn); }
+  .k { font-family: var(--f-data); font-size: .92em; color: var(--ink); }
+  .num-inline { font-family: var(--f-data); font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  ol.reasons { margin: 0; padding-left: 20px; color: var(--ink-mid); }
+  ol.reasons li { margin-bottom: 8px; }
+  ol.reasons li:last-child { margin-bottom: 0; }
+
+  footer {
+    margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-size: 12.5px; color: var(--ink-dim);
+    display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between;
+  }
+  footer a { color: var(--ink-mid); }
+  a { color: var(--signal); }
+  [hidden] { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<header class="nameplate">
+  <div class="nameplate-inner">
+    <div>
+      <p class="eyebrow">Ingeniería Industrial · UPC</p>
+      <h1>Machine Learning<br>en Procesos Industriales</h1>
+      <p class="byline">
+        Resultados de dos proyectos predictivos.
+        <strong>Fabrizio Carruitero</strong> · modelos entrenados en Python, ejecutándose aquí en el navegador
+      </p>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:0">
+    <div class="tabs" role="tablist" aria-label="Proyectos">
+      <button class="tab" role="tab" id="tab-metalx" aria-controls="p-metalx" aria-selected="true">Control de calidad · MetalX</button>
+      <button class="tab" role="tab" id="tab-rutas" aria-controls="p-rutas" aria-selected="false">Optimización de rutas</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============================================================ METALX -->
+  <section id="p-metalx" role="tabpanel" aria-labelledby="tab-metalx">
+
+    <dl class="readout">
+      <div><dt>Lotes analizados</dt><dd id="mx-n">—</dd></div>
+      <div><dt>Mejor R² (test)</dt><dd id="mx-r2">—</dd></div>
+      <div><dt>Peso de la vibración</dt><dd id="mx-imp">—</dd></div>
+      <div><dt>Asimetría del objetivo</dt><dd id="mx-skew">—</dd></div>
+    </dl>
+
+    <div class="grid">
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Simulador de lote</h2>
+          <span class="note">Random Forest real · 100 árboles · inferencia local</span>
+        </div>
+        <div class="sim">
+          <div class="channels" id="channels"></div>
+          <div class="display">
+            <div>
+              <p class="display-label" style="margin:0 0 8px">Defectos estimados</p>
+              <p class="big-number" id="pred" style="margin:0">—<span> u</span></p>
+            </div>
+            <div class="meter">
+              <p class="display-label" style="margin:0">Nivel de riesgo</p>
+              <span class="band low" id="band">—</span>
+              <svg id="meter-svg" class="chart" viewBox="0 0 260 34" role="img"
+                   aria-label="Posición de la estimación dentro de la distribución histórica"></svg>
+            </div>
+            <p class="compare" id="compare">—</p>
+          </div>
+        </div>
+        <div class="panel-body" style="border-top:1px solid var(--rule)">
+          <p>
+            Mueve los cuatro sensores y la predicción se recalcula al instante. No hay
+            servidor: el Random Forest entrenado en el notebook se exportó a
+            <span class="k">JSON</span> (100 árboles, 1 500 nodos, 56 KB) y la inferencia corre
+            en JavaScript. La desviación frente a <span class="k">scikit-learn</span> es de
+            <span class="num-inline">0.0000000000</span>.
+          </p>
+        </div>
+      </article>
+
+      <article class="panel span-7">
+        <div class="panel-head">
+          <h2>Importancia de variables</h2>
+          <span class="note">Random Forest</span>
+        </div>
+        <div class="panel-body">
+          <svg id="mx-imp-chart" class="chart" role="img"
+               aria-label="Importancia relativa de las cuatro variables de proceso"></svg>
+          <div class="finding">
+            <p>
+              <strong>La vibración RMS concentra el 89.3 % del poder predictivo.</strong>
+              Monitorearla es la palanca de control de calidad más rentable del proceso, y
+              justifica priorizar el mantenimiento predictivo de la máquina sobre el ajuste
+              fino de temperatura, presión o tiempo de ciclo.
+            </p>
+          </div>
+          <details class="data">
+            <summary>Ver datos</summary>
+            <div class="scroll-x"><table id="mx-imp-table"></table></div>
+          </details>
+        </div>
+      </article>
+
+      <article class="panel span-5">
+        <div class="panel-head"><h2>Modelos</h2><span class="note">R² en test</span></div>
+        <div class="panel-body">
+          <svg id="mx-mod-chart" class="chart" role="img"
+               aria-label="Comparación del R² de los tres modelos"></svg>
+          <details class="data">
+            <summary>Ver datos</summary>
+            <div class="scroll-x"><table id="mx-mod-table"></table></div>
+          </details>
+        </div>
+      </article>
+
+      <article class="panel span-7">
+        <div class="panel-head">
+          <h2>Distribución de defectos</h2>
+          <span class="note">2 500 lotes · 40 intervalos</span>
+        </div>
+        <div class="panel-body">
+          <svg id="mx-hist" class="chart" role="img"
+               aria-label="Histograma de defectos por lote con fuerte asimetría a la derecha"></svg>
+          <div class="finding caution">
+            <p>
+              La mediana está en <span class="num-inline">34.88</span> defectos, pero el
+              máximo llega a <span class="num-inline">533.31</span>. Esa
+              <strong>cola larga de lotes catastróficos</strong> es la razón por la que
+              ningún modelo supera un R² de 0.56.
+            </p>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel span-5">
+        <div class="panel-head"><h2>Predicción vs real</h2><span class="note">500 lotes de test</span></div>
+        <div class="panel-body">
+          <svg id="mx-scatter" class="chart" role="img"
+               aria-label="Dispersión de predicción frente a valor real del Random Forest"></svg>
+          <p style="font-size:13px;margin:12px 0 0">
+            El modelo sigue la diagonal en el rango habitual, pero
+            <strong>subestima los lotes extremos</strong>: la nube se aplana a partir de
+            ~150 defectos.
+          </p>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head"><h2>Por qué el R² se topa en 0.55</h2></div>
+        <div class="panel-body">
+          <ol class="reasons">
+            <li>
+              <strong>Solo una variable informativa.</strong> Con la vibración cargando el
+              89 % y las otras tres aportando ruido, no hay más señal disponible.
+            </li>
+            <li>
+              <strong>La cola larga es impredecible con estos sensores.</strong> Los lotes de
+              300–533 defectos responden a causas no medidas: calidad de la materia prima,
+              desgaste del molde, paradas de línea.
+            </li>
+            <li>
+              <strong>El error cuadrático castiga esos casos.</strong> La validación cruzada
+              lo confirma: MSE promedio de <span class="num-inline">625.6</span> con una
+              desviación entre pliegues de <span class="num-inline">± 277.9</span> — casi tan
+              grande como el propio promedio, porque algunos pliegues concentran más lotes
+              atípicos que otros.
+            </li>
+          </ol>
+          <p style="margin-top:16px">
+            <strong>Qué haría falta:</strong> transformar el objetivo con
+            <span class="k">log1p</span> para comprimir la cola, incorporar variables de
+            materia prima y mantenimiento, o reformular el problema como clasificación
+            —lote conforme / lote en riesgo—, que es además la decisión que realmente toma
+            un supervisor de planta.
+          </p>
+          <details class="data">
+            <summary>Validación cruzada (5 pliegues)</summary>
+            <div class="scroll-x"><table id="mx-cv-table"></table></div>
+          </details>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ============================================================= RUTAS -->
+  <section id="p-rutas" role="tabpanel" aria-labelledby="tab-rutas" hidden>
+
+    <dl class="readout">
+      <div><dt>Registros crudos</dt><dd id="rt-raw">—</dd></div>
+      <div><dt>Tras limpieza</dt><dd id="rt-clean">—</dd></div>
+      <div><dt>Predictores</dt><dd id="rt-feat">—</dd></div>
+      <div><dt>Mejor R² (test)</dt><dd id="rt-r2">—</dd></div>
+    </dl>
+
+    <div class="grid">
+
+      <article class="panel span-5">
+        <div class="panel-head"><h2>Modelos</h2><span class="note">R² en test</span></div>
+        <div class="panel-body">
+          <svg id="rt-mod-chart" class="chart" role="img"
+               aria-label="Comparación del R² de los tres modelos de rutas"></svg>
+          <details class="data">
+            <summary>Ver datos</summary>
+            <div class="scroll-x"><table id="rt-mod-table"></table></div>
+          </details>
+        </div>
+      </article>
+
+      <article class="panel span-7">
+        <div class="panel-head">
+          <h2>Importancia de variables</h2>
+          <span class="note">Árbol de decisión · solo las no nulas</span>
+        </div>
+        <div class="panel-body">
+          <svg id="rt-imp-chart" class="chart" role="img"
+               aria-label="Importancia de variables, concentrada en velocidad y distancia"></svg>
+          <div class="finding caution">
+            <p>
+              <strong>Dos variables se llevan el 99.1 %.</strong> El objetivo es el
+              <em>tiempo</em> de ruta, y los predictores dominantes son la velocidad
+              (<span class="num-inline">50.3 %</span>) y la distancia
+              (<span class="num-inline">48.8 %</span>): el modelo está reconstruyendo la
+              identidad física <span class="k">tiempo = distancia / velocidad</span>.
+            </p>
+          </div>
+          <details class="data">
+            <summary>Ver datos</summary>
+            <div class="scroll-x"><table id="rt-imp-table"></table></div>
+          </details>
+        </div>
+      </article>
+
+      <article class="panel span-7">
+        <div class="panel-head"><h2>Predicción vs real</h2><span class="note">204 rutas de test · árbol de decisión</span></div>
+        <div class="panel-body">
+          <svg id="rt-scatter" class="chart" role="img"
+               aria-label="Dispersión de predicción frente a valor real del árbol de decisión"></svg>
+        </div>
+      </article>
+
+      <article class="panel span-5">
+        <div class="panel-head"><h2>Calidad de los datos</h2></div>
+        <div class="panel-body">
+          <p style="margin-top:0">
+            El dataset llega con problemas deliberados. La auditoría encontró
+            <span class="num-inline" id="rt-dups">—</span> registros duplicados y seis
+            variables con nulos entre <span class="num-inline">4.76 %</span> y
+            <span class="num-inline">4.85 %</span>, además de velocidades negativas y
+            distancias imposibles.
+          </p>
+          <p>
+            Al rechazar la normalidad con Kolmogorov-Smirnov, la correlación se midió con
+            <strong>Spearman</strong>: <span class="num-inline">ρ = 0.8358</span> entre
+            distancia y costo de ruta (p &lt; 0.001).
+          </p>
+          <details class="data">
+            <summary>Nulos por variable</summary>
+            <div class="scroll-x"><table id="rt-null-table"></table></div>
+          </details>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head"><h2>Lectura crítica</h2></div>
+        <div class="panel-body">
+          <p style="margin-top:0">
+            El R² de <span class="num-inline">0.879</span> es engañosamente bueno. Se
+            documenta aquí porque reconocer la limitación de un modelo es parte del
+            análisis:
+          </p>
+          <ol class="reasons">
+            <li>
+              Las <strong>14 variables restantes no aportan poder predictivo</strong>,
+              incluidas las que intuitivamente deberían importar, como el índice de tráfico
+              o el de clima — ambas con importancia exactamente 0.
+            </li>
+            <li>
+              Un modelo así <strong>no sería útil en producción</strong>: si ya conoces la
+              velocidad promedio de la ruta, el tiempo se calcula con una división, no con
+              un árbol de decisión.
+            </li>
+            <li>
+              Un planteamiento más honesto sería <strong>predecir la velocidad
+              promedio</strong> —que sí depende de tráfico, clima y hora— y derivar el
+              tiempo a partir de ahí.
+            </li>
+          </ol>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <footer>
+    <span>
+      Modelos entrenados con Python 3.12, scikit-learn 1.9 y TensorFlow 2.21 ·
+      semilla fija <span class="k">SEED = 42</span>
+    </span>
+    <a href="https://github.com/fcarruitero24/UPC_projects_exams">github.com/fcarruitero24/UPC_projects_exams</a>
+  </footer>
+</main>
+
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+
+<script id="payload" type="application/json">/*__DATA__*/</script>
+
+<script>
+(function () {
+  "use strict";
+
+  const D = JSON.parse(document.getElementById("payload").textContent);
+  const tip = document.getElementById("tip");
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const fmt = (v, d) => Number(v).toFixed(d === undefined ? 2 : d);
+
+  /* ------------------------------------------------------------- tooltip */
+  function showTip(evt, html) {
+    tip.innerHTML = html;
+    tip.classList.add("on");
+    const pad = 12;
+    let x = evt.clientX + pad;
+    let y = evt.clientY + pad;
+    const r = tip.getBoundingClientRect();
+    if (x + r.width > innerWidth - 6) x = evt.clientX - r.width - pad;
+    if (y + r.height > innerHeight - 6) y = evt.clientY - r.height - pad;
+    tip.style.left = x + "px";
+    tip.style.top = y + "px";
+  }
+  function hideTip() { tip.classList.remove("on"); }
+
+  const NS = "http://www.w3.org/2000/svg";
+  function el(name, attrs, parent) {
+    const n = document.createElementNS(NS, name);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+
+  /* --------------------------------------------------- horizontal bars */
+  function barChart(svgId, rows, opts) {
+    const o = Object.assign({ max: null, decimals: 3, pct: false, gutter: 132 }, opts || {});
+    const svg = document.getElementById(svgId);
+    svg.textContent = "";
+    const rowH = 34, padT = 20, padB = 26, padR = 58;
+    const w = 640, h = padT + rows.length * rowH + padB;
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.style.maxHeight = h + 40 + "px";
+
+    const x0 = o.gutter, x1 = w - padR;
+    const max = o.max !== null ? o.max : Math.max.apply(null, rows.map((r) => r.value)) * 1.05;
+    const sx = (v) => x0 + (v / max) * (x1 - x0);
+
+    const ticks = [0, max / 2, max];
+    ticks.forEach((t) => {
+      el("line", { x1: sx(t), x2: sx(t), y1: padT - 6, y2: h - padB,
+                   class: t === 0 ? "axis" : "grid-line" }, svg);
+      const lab = el("text", { x: sx(t), y: h - padB + 15,
+                               "text-anchor": t === 0 ? "start" : "middle" }, svg);
+      lab.textContent = o.pct ? Math.round(t * 100) + "%" : fmt(t, t === 0 ? 0 : 2);
+    });
+
+    rows.forEach((r, i) => {
+      const cy = padT + i * rowH + rowH / 2;
+      const bh = 15;
+      const name = el("text", { x: x0 - 10, y: cy + 4, "text-anchor": "end", class: "lbl" }, svg);
+      name.textContent = r.label;
+
+      const bw = Math.max(sx(r.value) - x0, 1);
+      const bar = el("rect", { x: x0, y: cy - bh / 2, width: bw, height: bh,
+                               fill: r.color || css("--signal"), class: "bar", rx: 1 }, svg);
+
+      const v = el("text", { x: x0 + bw + 8, y: cy + 4, class: "val" }, svg);
+      v.textContent = o.pct ? fmt(r.value * 100, 1) + "%" : fmt(r.value, o.decimals);
+
+      const hit = el("rect", { x: x0, y: cy - rowH / 2, width: x1 - x0, height: rowH,
+                               fill: "transparent" }, svg);
+      const body = r.tip || `<b>${r.label}</b><br>${o.pct ? fmt(r.value * 100, 1) + "%" : fmt(r.value, o.decimals)}`;
+      [bar, hit].forEach((t) => {
+        t.addEventListener("mousemove", (e) => { bar.style.opacity = ".78"; showTip(e, body); });
+        t.addEventListener("mouseleave", () => { bar.style.opacity = "1"; hideTip(); });
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------- histogram */
+  function histogram(svgId, counts, edges) {
+    const svg = document.getElementById(svgId);
+    svg.textContent = "";
+    const w = 620, h = 250, padL = 46, padR = 12, padT = 14, padB = 34;
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    const x0 = padL, x1 = w - padR, y0 = h - padB, y1 = padT;
+    const maxC = Math.max.apply(null, counts);
+    const sy = (v) => y0 - (v / maxC) * (y0 - y1);
+    const bw = (x1 - x0) / counts.length;
+
+    [0, 0.5, 1].forEach((f) => {
+      const v = maxC * f;
+      el("line", { x1: x0, x2: x1, y1: sy(v), y2: sy(v),
+                   class: f === 0 ? "axis" : "grid-line" }, svg);
+      const t = el("text", { x: x0 - 8, y: sy(v) + 4, "text-anchor": "end" }, svg);
+      t.textContent = Math.round(v);
+    });
+
+    counts.forEach((cnt, i) => {
+      if (!cnt) return;
+      const bx = x0 + i * bw;
+      const bh = y0 - sy(cnt);
+      const bar = el("rect", { x: bx + 0.6, y: sy(cnt), width: Math.max(bw - 1.2, 0.8),
+                               height: bh, fill: css("--signal"), class: "bar" }, svg);
+      const body = `<b>${fmt(edges[i], 0)} – ${fmt(edges[i + 1], 0)} defectos</b><br>${cnt} lote${cnt === 1 ? "" : "s"}`;
+      bar.addEventListener("mousemove", (e) => showTip(e, body));
+      bar.addEventListener("mouseleave", hideTip);
+    });
+
+    [0, 100, 200, 300, 400, 500].forEach((v) => {
+      const px = x0 + (v / edges[edges.length - 1]) * (x1 - x0);
+      const t = el("text", { x: px, y: h - 12, "text-anchor": "middle" }, svg);
+      t.textContent = v;
+    });
+    const cap = el("text", { x: x1, y: padT + 8, "text-anchor": "end" }, svg);
+    cap.textContent = "cola hasta 533 →";
+  }
+
+  /* ------------------------------------------------------------ scatter */
+  function scatter(svgId, pts, unit) {
+    const svg = document.getElementById(svgId);
+    svg.textContent = "";
+    const w = 420, h = 396, pad = 46;
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    const lo = 0;
+
+    // Unos pocos lotes extremos comprimirían toda la nube contra el origen.
+    // El eje se corta en el percentil 98 y los puntos que quedan fuera se
+    // dibujan en el borde con un marcador propio, sin ocultarlos.
+    const mags = pts.map((p) => Math.max(p[0], p[1])).sort((a, b) => a - b);
+    const q98 = mags[Math.floor(mags.length * 0.98)];
+    const step = q98 > 200 ? 50 : 25;
+    const hi = Math.ceil((q98 * 1.02) / step) * step;
+    const nOut = pts.filter((p) => p[0] > hi || p[1] > hi).length;
+
+    const sx = (v) => pad + (Math.min(v, hi) / hi) * (w - pad - 14);
+    const sy = (v) => (h - pad) - (Math.min(v, hi) / hi) * (h - pad - 14);
+
+    [0, hi / 2, hi].forEach((v) => {
+      el("line", { x1: sx(v), x2: sx(v), y1: sy(lo), y2: sy(hi),
+                   class: v === 0 ? "axis" : "grid-line" }, svg);
+      el("line", { x1: sx(lo), x2: sx(hi), y1: sy(v), y2: sy(v),
+                   class: v === 0 ? "axis" : "grid-line" }, svg);
+      const tx = el("text", { x: sx(v), y: h - pad + 16, "text-anchor": "middle" }, svg);
+      tx.textContent = Math.round(v);
+      const ty = el("text", { x: pad - 8, y: sy(v) + 4, "text-anchor": "end" }, svg);
+      ty.textContent = Math.round(v);
+    });
+
+    el("line", { x1: sx(0), y1: sy(0), x2: sx(hi), y2: sy(hi),
+                 stroke: css("--crit"), "stroke-width": 1.5,
+                 "stroke-dasharray": "5 4" }, svg);
+
+    pts.forEach((p) => {
+      const out = p[0] > hi || p[1] > hi;
+      const body = `<b>real ${fmt(p[0])} ${unit}</b><br>predicho ${fmt(p[1])} ${unit}` +
+                   (out ? "<br>fuera del rango del eje" : "");
+      let c;
+      if (out) {
+        c = el("rect", { x: sx(p[0]) - 3, y: sy(p[1]) - 3, width: 6, height: 6,
+                         fill: css("--crit"), "fill-opacity": .85 }, svg);
+      } else {
+        c = el("circle", { cx: sx(p[0]), cy: sy(p[1]), r: 2.6,
+                           fill: css("--probe"), "fill-opacity": .5, class: "dot" }, svg);
+      }
+      c.addEventListener("mousemove", (e) => {
+        if (!out) { c.setAttribute("r", 5); c.setAttribute("fill-opacity", 1); }
+        showTip(e, body);
+      });
+      c.addEventListener("mouseleave", () => {
+        if (!out) { c.setAttribute("r", 2.6); c.setAttribute("fill-opacity", .5); }
+        hideTip();
+      });
+    });
+
+    if (nOut) {
+      const n = el("text", { x: w - 14, y: 20, "text-anchor": "end",
+                             fill: css("--crit") }, svg);
+      n.textContent = "■ " + nOut + " fuera de rango";
+    }
+
+    const xl = el("text", { x: (sx(0) + sx(hi)) / 2, y: h - 8, "text-anchor": "middle" }, svg);
+    xl.textContent = "real";
+    const yl = el("text", { x: 12, y: (sy(0) + sy(hi)) / 2,
+                            "text-anchor": "middle",
+                            transform: `rotate(-90 12 ${(sy(0) + sy(hi)) / 2})` }, svg);
+    yl.textContent = "predicho";
+  }
+
+  /* -------------------------------------------------------------- table */
+  function table(id, head, rows) {
+    const t = document.getElementById(id);
+    t.textContent = "";
+    const thead = document.createElement("thead");
+    const htr = document.createElement("tr");
+    head.forEach((c, i) => {
+      const th = document.createElement("th");
+      th.textContent = c;
+      if (i > 0) th.style.textAlign = "right";
+      htr.appendChild(th);
+    });
+    thead.appendChild(htr);
+    t.appendChild(thead);
+    const tb = document.createElement("tbody");
+    rows.forEach((r, ri) => {
+      const tr = document.createElement("tr");
+      r.forEach((c, i) => {
+        const td = document.createElement("td");
+        td.textContent = c;
+        if (i > 0) td.className = "num" + (ri === 0 ? " best" : "");
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+  }
+
+  /* ---------------------------------------------- Random Forest en JS */
+  const RF = D.metalx.modelo_rf;
+  function predictRF(x) {
+    let sum = 0;
+    for (let i = 0; i < RF.trees.length; i++) {
+      const t = RF.trees[i];
+      let n = 0;
+      while (t.l[n] !== -1) n = x[t.f[n]] <= t.t[n] ? t.l[n] : t.r[n];
+      sum += t.v[n];
+    }
+    return sum / RF.trees.length;
+  }
+
+  /* ------------------------------------------------------ MetalX: KPIs */
+  const M = D.metalx;
+  const best = M.metricas.reduce((a, b) => (b.r2 > a.r2 ? b : a));
+  document.getElementById("mx-n").textContent = M.n.toLocaleString("es-PE");
+  document.getElementById("mx-r2").innerHTML = fmt(best.r2, 3) + "<small>RNA</small>";
+  document.getElementById("mx-imp").innerHTML =
+    fmt(M.importancias[0].valor * 100, 1) + "<small>%</small>";
+  document.getElementById("mx-skew").textContent = fmt(M.skew, 2);
+
+  const UNITS = {
+    Temp_Matriz_C: "°C",
+    Presion_Inyeccion_Bar: "Bar",
+    Tiempo_Ciclo_s: "s",
+    Vibracion_RMS: "",
+  };
+  const impByVar = {};
+  M.importancias.forEach((r) => { impByVar[r.variable] = r.valor; });
+
+  barChart("mx-imp-chart", M.importancias.map((r) => ({
+    label: r.variable,
+    value: r.valor,
+    color: css("--signal"),
+    tip: `<b>${r.variable}</b><br>importancia ${fmt(r.valor * 100, 1)}%<br>correlación ${fmt(
+      M.correlaciones.find((c) => c.variable === r.variable).valor, 3)}`,
+  })), { pct: true, max: 1, gutter: 168 });
+
+  table("mx-imp-table",
+    ["Variable", "Importancia", "Correlación"],
+    M.importancias.map((r) => [
+      r.variable,
+      fmt(r.valor * 100, 1) + " %",
+      fmt(M.correlaciones.find((c) => c.variable === r.variable).valor, 3),
+    ]));
+
+  barChart("mx-mod-chart", M.metricas.map((m) => ({
+    label: m.modelo.replace(" (RNA)", ""),
+    value: m.r2,
+    color: css("--probe"),
+    tip: `<b>${m.modelo}</b><br>${m.config}<br>R² ${fmt(m.r2, 4)} · MAE ${fmt(m.mae)} · MSE ${fmt(m.mse)}`,
+  })), { max: 0.62, gutter: 132 });
+
+  table("mx-mod-table",
+    ["Modelo", "R²", "MAE", "MSE"],
+    M.metricas.map((m) => [m.modelo, fmt(m.r2, 4), fmt(m.mae), fmt(m.mse)]));
+
+  table("mx-cv-table",
+    ["Modelo", "CV MSE", "Desv."],
+    M.cv.map((c) => [c.modelo, fmt(c.mse), "± " + fmt(c.std)]));
+
+  histogram("mx-hist", M.histograma.conteos, M.histograma.bordes);
+  scatter("mx-scatter", M.dispersion, "u");
+
+  /* ------------------------------------------------- MetalX: simulador */
+  const Q = { p50: M.mediana, p75: 52.94 };
+  const chWrap = document.getElementById("channels");
+  const inputs = [];
+
+  RF.features.forEach((name) => {
+    const r = M.rangos.find((x) => x.variable === name);
+    const step = name === "Vibracion_RMS" ? 0.01 : (name === "Tiempo_Ciclo_s" ? 0.01 : 0.1);
+    const wrap = document.createElement("div");
+    wrap.className = "channel";
+    const pct = fmt(impByVar[name] * 100, 1);
+    wrap.innerHTML =
+      '<label for="in-' + name + '">' +
+        '<span class="ch-name">' + name + '</span>' +
+        '<span class="ch-val"><span data-out="' + name + '"></span> <em>' + UNITS[name] + '</em></span>' +
+      '</label>';
+    const inp = document.createElement("input");
+    inp.type = "range";
+    inp.id = "in-" + name;
+    inp.min = r.min; inp.max = r.max; inp.step = step; inp.value = r.mediana;
+    inp.setAttribute("aria-describedby", "sc-" + name);
+    wrap.appendChild(inp);
+    const scale = document.createElement("div");
+    scale.className = "ch-scale";
+    scale.id = "sc-" + name;
+    scale.innerHTML = "<span>" + r.min + "</span>" +
+      '<span class="ch-weight">peso ' + pct + "%</span>" +
+      "<span>" + r.max + "</span>";
+    wrap.appendChild(scale);
+    chWrap.appendChild(wrap);
+    inputs.push({ name: name, input: inp });
+    inp.addEventListener("input", update);
+  });
+
+  const meter = document.getElementById("meter-svg");
+  function drawMeter(value) {
+    meter.textContent = "";
+    const w = 260, h = 34, y = 13, hh = 9;
+    const hi = 140;
+    const sx = (v) => (Math.min(v, hi) / hi) * w;
+    const segs = [
+      { to: Q.p50, color: css("--good") },
+      { to: Q.p75, color: css("--warn") },
+      { to: hi, color: css("--crit") },
+    ];
+    let from = 0;
+    segs.forEach((s) => {
+      el("rect", { x: sx(from) + (from ? 1 : 0), y: y,
+                   width: Math.max(sx(s.to) - sx(from) - (from ? 1 : 0), 1),
+                   height: hh, fill: s.color, "fill-opacity": .3 }, meter);
+      from = s.to;
+    });
+    const px = sx(value);
+    el("rect", { x: Math.max(px - 1.5, 0), y: y - 4, width: 3, height: hh + 8,
+                 fill: css("--ink") }, meter);
+    const lab = el("text", { x: 0, y: h - 1 }, meter);
+    lab.textContent = "0";
+    const l2 = el("text", { x: sx(Q.p50), y: h - 1, "text-anchor": "middle" }, meter);
+    l2.textContent = fmt(Q.p50, 0);
+    const l3 = el("text", { x: sx(Q.p75), y: h - 1, "text-anchor": "middle" }, meter);
+    l3.textContent = fmt(Q.p75, 0);
+    const l4 = el("text", { x: w, y: h - 1, "text-anchor": "end" }, meter);
+    l4.textContent = "140+";
+  }
+
+  function update() {
+    const vals = inputs.map((i) => parseFloat(i.input.value));
+    inputs.forEach((i, k) => {
+      const out = document.querySelector('[data-out="' + i.name + '"]');
+      out.textContent = fmt(vals[k], i.name === "Temp_Matriz_C" || i.name === "Presion_Inyeccion_Bar" ? 1 : 2);
+    });
+    const p = predictRF(vals);
+    document.getElementById("pred").innerHTML = fmt(p, 1) + "<span> u</span>";
+
+    const band = document.getElementById("band");
+    let cls, txt;
+    if (p < Q.p50) { cls = "low"; txt = "Bajo"; }
+    else if (p < Q.p75) { cls = "mid"; txt = "Medio"; }
+    else { cls = "high"; txt = "Alto"; }
+    band.className = "band " + cls;
+    band.textContent = txt;
+
+    const ratio = p / Q.p50;
+    document.getElementById("compare").innerHTML =
+      "Mediana histórica <b>" + fmt(Q.p50) + "</b> u · esta estimación es <b>" +
+      fmt(ratio) + "×</b> la mediana";
+    drawMeter(p);
+  }
+
+  /* -------------------------------------------------------- Rutas: KPIs */
+  const R = D.rutas;
+  const bestR = R.metricas.reduce((a, b) => (b.r2 > a.r2 ? b : a));
+  document.getElementById("rt-raw").textContent = R.n_raw.toLocaleString("es-PE");
+  document.getElementById("rt-clean").textContent = R.n_limpio.toLocaleString("es-PE");
+  document.getElementById("rt-feat").textContent = R.n_features;
+  document.getElementById("rt-r2").innerHTML = fmt(bestR.r2, 3) + "<small>árbol</small>";
+  document.getElementById("rt-dups").textContent = R.duplicados;
+
+  barChart("rt-mod-chart", R.metricas.map((m) => ({
+    label: m.modelo,
+    value: m.r2,
+    color: css("--probe"),
+    tip: `<b>${m.modelo}</b><br>${m.config}<br>R² ${fmt(m.r2, 4)} · MAE ${fmt(m.mae)} · RMSE ${fmt(m.rmse)}`,
+  })), { max: 1, gutter: 132 });
+
+  table("rt-mod-table",
+    ["Modelo", "R²", "MAE", "RMSE"],
+    R.metricas.map((m) => [m.modelo, fmt(m.r2, 4), fmt(m.mae), fmt(m.rmse)]));
+
+  barChart("rt-imp-chart", R.importancias.map((r) => ({
+    label: r.variable,
+    value: r.valor,
+    color: css("--signal"),
+    tip: `<b>${r.variable}</b><br>importancia ${fmt(r.valor * 100, 2)}%`,
+  })), { pct: true, max: 0.55, gutter: 196 });
+
+  table("rt-imp-table",
+    ["Variable", "Importancia"],
+    R.importancias.map((r) => [r.variable, fmt(r.valor * 100, 2) + " %"]));
+
+  table("rt-null-table",
+    ["Variable", "Nulos", "% del total"],
+    Object.keys(R.nulos).map((k) => [
+      k, R.nulos[k], fmt((R.nulos[k] / R.n_raw) * 100, 2) + " %",
+    ]));
+
+  scatter("rt-scatter", R.dispersion, "min");
+
+  /* --------------------------------------------------------------- tabs */
+  const tabs = [
+    { btn: document.getElementById("tab-metalx"), panel: document.getElementById("p-metalx") },
+    { btn: document.getElementById("tab-rutas"), panel: document.getElementById("p-rutas") },
+  ];
+  tabs.forEach((t, i) => {
+    t.btn.addEventListener("click", () => select(i));
+    t.btn.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        select((i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length, true);
+      }
+    });
+  });
+  function select(idx, focus) {
+    tabs.forEach((t, i) => {
+      t.btn.setAttribute("aria-selected", String(i === idx));
+      t.panel.hidden = i !== idx;
+    });
+    if (focus) tabs[idx].btn.focus();
+  }
+
+  /* --------------------------------- redibujar al cambiar de tema */
+  const repaint = () => {
+    barChart("mx-imp-chart", M.importancias.map((r) => ({
+      label: r.variable, value: r.valor, color: css("--signal"),
+      tip: `<b>${r.variable}</b><br>importancia ${fmt(r.valor * 100, 1)}%`,
+    })), { pct: true, max: 1, gutter: 168 });
+    barChart("mx-mod-chart", M.metricas.map((m) => ({
+      label: m.modelo.replace(" (RNA)", ""), value: m.r2, color: css("--probe"),
+      tip: `<b>${m.modelo}</b><br>R² ${fmt(m.r2, 4)}`,
+    })), { max: 0.62, gutter: 132 });
+    histogram("mx-hist", M.histograma.conteos, M.histograma.bordes);
+    scatter("mx-scatter", M.dispersion, "u");
+    barChart("rt-mod-chart", R.metricas.map((m) => ({
+      label: m.modelo, value: m.r2, color: css("--probe"),
+      tip: `<b>${m.modelo}</b><br>R² ${fmt(m.r2, 4)}`,
+    })), { max: 1, gutter: 132 });
+    barChart("rt-imp-chart", R.importancias.map((r) => ({
+      label: r.variable, value: r.valor, color: css("--signal"),
+      tip: `<b>${r.variable}</b><br>${fmt(r.valor * 100, 2)}%`,
+    })), { pct: true, max: 0.55, gutter: 196 });
+    scatter("rt-scatter", R.dispersion, "min");
+    update();
+  };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", repaint);
+  new MutationObserver(repaint).observe(document.documentElement, {
+    attributes: true, attributeFilter: ["data-theme"],
+  });
+
+  update();
+})();
+</script>
