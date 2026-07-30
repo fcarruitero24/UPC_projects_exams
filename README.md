@@ -25,7 +25,7 @@ problemas reales de logística y manufactura.
 | # | Proyecto | Problema | Mejor modelo | Métrica |
 |:--:|---|---|---|:--:|
 | **01** | [Optimización de rutas e-commerce](01-optimizacion-rutas-ecommerce/) | Predecir el tiempo de ruta optimizado a partir de variables logísticas | Árbol de Decisión | **R² = 0.879** |
-| **02** | [Control de calidad — Caso MetalX](02-control-calidad-metalx/) | Predecir piezas defectuosas por lote en inyección de plástico | Red Neuronal (RNA) | **R² = 0.551** |
+| **02** | [Control de calidad — Caso MetalX](02-control-calidad-metalx/) | Predecir piezas defectuosas por lote en inyección de plástico | Red Neuronal (RNA) | **R² = 0.553** |
 
 Ambos siguen el mismo flujo de trabajo: EDA → auditoría de calidad de datos →
 limpieza → *feature engineering* → entrenamiento de 3 modelos → validación
@@ -75,13 +75,13 @@ tiempo real sobre 2 500 lotes.
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="02-control-calidad-metalx/assets/comparativa-modelos-dark.png">
-  <img src="02-control-calidad-metalx/assets/comparativa-modelos-light.png" alt="Comparativa de R² en test: Red Neuronal 0.551, Random Forest 0.516, Árbol de Decisión 0.440" width="720">
+  <img src="02-control-calidad-metalx/assets/comparativa-modelos-light.png" alt="Comparativa de R² en test: Red Neuronal 0.553, Random Forest 0.516, Árbol de Decisión 0.440" width="720">
 </picture>
 </div>
 
 | Modelo | MAE | MSE | R² |
 |---|:--:|:--:|:--:|
-| **Red Neuronal (RNA)** *(16→8→1, ReLU)* | **9.81** | **241.0** | **0.551** |
+| **Red Neuronal (RNA)** *(16→8→1, ReLU)* | **9.80** | **240.1** | **0.553** |
 | Random Forest *(GridSearchCV)* | 10.18 | 260.0 | 0.516 |
 | Árbol de Decisión *(GridSearchCV)* | 10.87 | 300.7 | 0.440 |
 

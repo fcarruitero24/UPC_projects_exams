@@ -8,7 +8,8 @@
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white)
 ![Keras](https://img.shields.io/badge/Keras-D00000?style=flat-square&logo=keras&logoColor=white)
 ![Lotes](https://img.shields.io/badge/lotes-2%20500-2a78d6?style=flat-square)
-![Mejor R²](https://img.shields.io/badge/mejor%20R²-0.551-22c55e?style=flat-square)
+![Mejor R²](https://img.shields.io/badge/mejor%20R²-0.553-22c55e?style=flat-square)
+![Reproducible](https://img.shields.io/badge/semilla-fijada-4a3aa7?style=flat-square)
 
 </div>
 
@@ -69,10 +70,14 @@ De las cuatro variables de proceso, **solo una explica los defectos**:
 
 | Variable | Correlación con defectos | Importancia (Random Forest) |
 |---|:--:|:--:|
-| **`Vibracion_RMS`** | **0.57** | **89.3 %** |
-| `Temp_Matriz_C` | 0.14 | 7.5 % |
-| `Presion_Inyeccion_Bar` | 0.06 | 2.4 % |
-| `Tiempo_Ciclo_s` | −0.05 | 0.8 % |
+| **`Vibracion_RMS`** | **0.575** | **89.3 %** |
+| `Temp_Matriz_C` | 0.142 | 7.5 % |
+| `Presion_Inyeccion_Bar` | 0.063 | 2.4 % |
+| `Tiempo_Ciclo_s` | −0.046 | 0.8 % |
+
+<div align="center">
+<img src="assets/04-importancia-variables.png" alt="Importancia de variables del Random Forest, dominada por Vibracion_RMS" width="620">
+</div>
 
 > **Traducción a planta:** la vibración RMS concentra casi nueve de cada diez
 > unidades de poder predictivo. Instrumentar y **monitorear la vibración es la
@@ -87,32 +92,33 @@ De las cuatro variables de proceso, **solo una explica los defectos**:
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/comparativa-modelos-dark.png">
-  <img src="assets/comparativa-modelos-light.png" alt="Comparativa de R² en test: Red Neuronal 0.551, Random Forest 0.516, Árbol de Decisión 0.440" width="720">
+  <img src="assets/comparativa-modelos-light.png" alt="Comparativa de R² en test: Red Neuronal 0.553, Random Forest 0.516, Árbol de Decisión 0.440" width="720">
 </picture>
 </div>
 
 | Modelo | Configuración | MAE | MSE | R² test |
 |---|---|:--:|:--:|:--:|
-| **🥇 Red Neuronal (RNA)** | Densa 16 → 8 → 1, ReLU + lineal, Adam, 100 épocas | **9.81** | **241.0** | **0.551** |
+| **🥇 Red Neuronal (RNA)** | Densa 16 → 8 → 1, ReLU + lineal, Adam, 100 épocas | **9.80** | **240.1** | **0.553** |
 | 🥈 Random Forest | `GridSearchCV` → `max_depth=3`, `n_estimators=100` | 10.18 | 260.0 | 0.516 |
 | 🥉 Árbol de Decisión | `GridSearchCV` → `max_depth=3` | 10.87 | 300.7 | 0.440 |
 
 ### Validación cruzada (5-fold, MSE)
 
-| Modelo | CV MSE |
-|---|:--:|
-| Random Forest | **625.6** |
-| Árbol de Decisión | 638.4 |
+| Modelo | CV MSE | Desviación entre pliegues |
+|---|:--:|:--:|
+| Random Forest | **625.6** | ± 277.9 |
+| Árbol de Decisión | 638.4 | ± 271.3 |
 
-El MSE de validación cruzada (≈ 626) es más del doble que el MSE en test (260).
-Esa brecha no es un error: refleja que **algunos pliegues concentran más lotes
-atípicos que otros**, con la cola larga de la variable objetivo penalizando
-fuertemente el error cuadrático. Es la señal estadística del mismo problema que
-ya anunciaba la asimetría de 4.65.
+El MSE de validación cruzada (≈ 626) es más del doble que el MSE en test (260),
+y la desviación entre pliegues (± 278) es casi tan grande como el propio
+promedio. Esa dispersión no es un error: refleja que **algunos pliegues
+concentran más lotes atípicos que otros**. Basta que una partición reciba varios
+lotes de 300+ defectos para que su error cuadrático se dispare. Es la señal
+estadística del mismo problema que ya anunciaba la asimetría de 4.65.
 
 <div align="center">
-<img src="assets/04-curva-loss-rna.png" alt="Curva de pérdida de entrenamiento y validación de la red neuronal" width="420">
-<img src="assets/05-pred-vs-real-rf.png" alt="Predicción frente a valor real del Random Forest" width="420">
+<img src="assets/05-curva-loss-rna.png" alt="Curva de pérdida de entrenamiento y validación de la red neuronal" width="420">
+<img src="assets/07-pred-vs-real-rf.png" alt="Predicción frente a valor real del Random Forest" width="420">
 </div>
 
 ---
@@ -139,7 +145,7 @@ supervisor de planta.
 
 ## Predicción sobre un caso nuevo
 
-Ambos entregables cierran aplicando el modelo a un lote no visto:
+El análisis cierra aplicando el modelo a un lote no visto:
 
 ```python
 nuevo = pd.DataFrame([{
@@ -152,20 +158,46 @@ nuevo = pd.DataFrame([{
 modelo_rf.predict(nuevo)   # → 69.53 defectos estimados
 ```
 
-Frente a una mediana de 34.88 defectos, el modelo estima **casi el doble** para
-este lote — consistente con una vibración de 6.3, cerca del máximo observado de
-6.5. El modelo se comporta como debería.
+Frente a una mediana de 34.88 defectos, el modelo estima **1.99× la mediana**
+para este lote — consistente con una vibración de 6.3, cerca del máximo
+observado de 6.5. El modelo se comporta como debería.
 
 ---
+
+## Reproducibilidad
+
+El notebook fija una **semilla global** (`SEED = 42`) que cubre NumPy, Keras y
+todos los estimadores de scikit-learn, por lo que **cada ejecución devuelve
+exactamente los mismos resultados** — incluida la red neuronal, que sin semilla
+variaba entre corridas.
+
+Ejecutado con Python 3.12, TensorFlow 2.21 y scikit-learn 1.9.
+
+## Estructura del notebook
+
+El análisis está organizado en **13 secciones** con su interpretación
+correspondiente, de modo que cada gráfico aparece junto al código que lo genera:
+
+| Sección | Contenido |
+|:--:|---|
+| 1–2 | Configuración, carga del dataset y diccionario de variables |
+| 3 | Auditoría de calidad (nulos y duplicados) |
+| 4 | Distribución de la variable objetivo y su asimetría |
+| 5 | Análisis de correlación |
+| 6 | Partición 80/20 y escalado |
+| 7–9 | Los tres modelos: Árbol, Random Forest y Red Neuronal |
+| 10 | Validación cruzada de 5 pliegues |
+| 11–12 | Comparación de modelos y predicción vs real |
+| 13 | Aplicación a un caso nuevo + conclusiones |
 
 ## Archivos
 
 | Archivo | Contenido |
 |---|---|
-| [`control_calidad_metalx.ipynb`](control_calidad_metalx.ipynb) | Notebook con todas las salidas y gráficos guardados |
-| [`control_calidad_metalx.py`](control_calidad_metalx.py) | El mismo análisis como script ejecutable |
+| [`control_calidad_metalx.ipynb`](control_calidad_metalx.ipynb) | Notebook en 43 celdas, con todas las salidas y gráficos guardados |
+| [`control_calidad_metalx.py`](control_calidad_metalx.py) | Versión original del análisis como script ejecutable |
 | `df_metalx.csv` | Dataset de 2 500 lotes (separador `;`) |
-| `assets/` | Gráficos exportados |
+| `assets/` | Los 7 gráficos exportados del notebook |
 
 > [!NOTE]
 > El CSV usa **punto y coma** como separador: `pd.read_csv("df_metalx.csv", sep=";")`.
