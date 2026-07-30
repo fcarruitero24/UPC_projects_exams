@@ -18,7 +18,9 @@ problemas reales de logística y manufactura.
 
 <br>
 
-### [▶ Ver el panel de resultados interactivo](https://fcarruitero24.github.io/UPC_projects_exams/)
+[![Ver el panel interactivo](https://img.shields.io/badge/%E2%96%B6%20Ver%20el%20panel%20interactivo-eb6834?style=for-the-badge&logoColor=white)](https://fcarruitero24.github.io/UPC_projects_exams/)
+
+**[fcarruitero24.github.io/UPC_projects_exams](https://fcarruitero24.github.io/UPC_projects_exams/)**
 
 Incluye un **simulador de lote**: mueves los cuatro sensores de la máquina y el
 Random Forest entrenado responde al instante — sin servidor, porque el modelo
