@@ -1,11 +1,13 @@
 <div align="center">
 
-# Machine Learning aplicado a Procesos Industriales
+**English** · [Español](README.es.md)
 
-**Proyectos académicos de Ingeniería Industrial — Universidad Peruana de Ciencias Aplicadas (UPC)**
+# Machine Learning Applied to Industrial Processes
 
-Analítica de datos, estadística avanzada y modelos predictivos aplicados a
-problemas reales de logística y manufactura.
+**Academic Industrial Engineering projects — Universidad Peruana de Ciencias Aplicadas (UPC)**
+
+Data analytics, advanced statistics and predictive models applied to
+real logistics and manufacturing problems.
 
 <br>
 
@@ -18,139 +20,139 @@ problemas reales de logística y manufactura.
 
 <br>
 
-[![Ver el panel interactivo](https://img.shields.io/badge/%E2%96%B6%20Ver%20el%20panel%20interactivo-eb6834?style=for-the-badge&logoColor=white)](https://fcarruitero24.github.io/UPC_projects_exams/)
+[![Open the interactive dashboard](https://img.shields.io/badge/%E2%96%B6%20Open%20the%20interactive%20dashboard-eb6834?style=for-the-badge&logoColor=white)](https://fcarruitero24.github.io/UPC_projects_exams/)
 
 **[fcarruitero24.github.io/UPC_projects_exams](https://fcarruitero24.github.io/UPC_projects_exams/)**
 
-Incluye un **simulador de lote**: mueves los cuatro sensores de la máquina y el
-Random Forest entrenado responde al instante — sin servidor, porque el modelo
-(100 árboles, 56 KB) se ejecuta en el navegador.
+It includes a **batch simulator**: you move the machine's four sensors and the
+trained Random Forest responds instantly, with no server, because the model
+(100 trees, 56 KB) runs in the browser.
 
 </div>
 
 ---
 
-## Los proyectos
+## The projects
 
-| # | Proyecto | Problema | Mejor modelo | Métrica |
+| # | Project | Problem | Best model | Metric |
 |:--:|---|---|---|:--:|
-| **01** | [Optimización de rutas e-commerce](01-optimizacion-rutas-ecommerce/) | Predecir el tiempo de ruta optimizado a partir de variables logísticas | Árbol de Decisión | **R² = 0.879** |
-| **02** | [Control de calidad — Caso MetalX](02-control-calidad-metalx/) | Predecir piezas defectuosas por lote en inyección de plástico | Red Neuronal (RNA) | **R² = 0.553** |
+| **01** | [E-commerce route optimization](01-optimizacion-rutas-ecommerce/) | Predict the optimized route time from logistics variables | Decision Tree | **R² = 0.879** |
+| **02** | [Quality control — MetalX case](02-control-calidad-metalx/) | Predict defective parts per batch in plastic injection molding | Neural Network (ANN) | **R² = 0.553** |
 
-Ambos siguen el mismo flujo de trabajo: EDA → auditoría de calidad de datos →
-limpieza → *feature engineering* → entrenamiento de 3 modelos → validación
-cruzada de 5 pliegues → comparación y predicción sobre un caso nuevo.
+Both follow the same workflow: EDA → data quality audit → cleaning →
+feature engineering → training 3 models → 5-fold cross-validation →
+comparison and prediction on a new case.
 
 ---
 
-## 01 · Optimización de rutas en e-commerce
+## 01 · E-commerce route optimization
 
-Auditoría y modelado de un dataset logístico deliberadamente "sucio"
-(1 030 registros, 18 columnas). El objetivo es predecir
-`optimized_route_time_min` para apoyar decisiones sobre ventanas de entrega,
-distancias y costos.
+Audit and modeling of a deliberately "dirty" logistics dataset
+(1,030 records, 18 columns). The goal is to predict
+`optimized_route_time_min` to support decisions about delivery windows,
+distances and costs.
 
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="01-optimizacion-rutas-ecommerce/assets/comparativa-modelos-dark.png">
-  <img src="01-optimizacion-rutas-ecommerce/assets/comparativa-modelos-light.png" alt="Comparativa de R² en test: Árbol de Decisión 0.879, Red Neuronal 0.844, KNN 0.541" width="720">
+  <img src="01-optimizacion-rutas-ecommerce/assets/comparativa-modelos-light.png" alt="Test R² comparison: Decision Tree 0.879, Neural Network 0.844, KNN 0.541" width="720">
 </picture>
 </div>
 
-| Modelo | MAE | RMSE | R² | R² validación cruzada |
+| Model | MAE | RMSE | R² | Cross-validation R² |
 |---|:--:|:--:|:--:|:--:|
-| **Árbol de Decisión** *(GridSearchCV, `max_depth=5`)* | **15.06** | **24.30** | **0.879** | 0.856 |
-| Red Neuronal (Keras) | 18.90 | 27.57 | 0.844 | — |
+| **Decision Tree** *(GridSearchCV, `max_depth=5`)* | **15.06** | **24.30** | **0.879** | 0.856 |
+| Neural Network (Keras) | 18.90 | 27.57 | 0.844 | — |
 | KNN *(`k=7`)* | 28.28 | 47.28 | 0.541 | 0.616 |
 
-**Lectura crítica del resultado.** Dos variables concentran el **99.1 %** de la
-importancia del árbol: `average_speed_kmph` (50.3 %) y `distance_km` (48.8 %).
-Esto no es casual — el modelo está reconstruyendo la relación física
-*tiempo = distancia / velocidad*, lo que explica un R² tan alto con tan pocas
-variables relevantes. Es un resultado válido como ejercicio de modelado, pero
-en producción indicaría que **las 14 variables restantes no aportan información
-predictiva** y que el problema real requiere una variable objetivo menos
-determinada por sus propios predictores.
+**A critical reading of the result.** Two variables account for **99.1%** of the
+tree's importance: `average_speed_kmph` (50.3%) and `distance_km` (48.8%).
+This is no accident: the model is reconstructing the physical relationship
+*time = distance / speed*, which explains such a high R² with so few
+relevant variables. It is a valid result as a modeling exercise, but in
+production it would indicate that **the remaining 14 variables add no
+predictive information** and that the real problem needs a target variable
+that is less determined by its own predictors.
 
-→ [Ver detalle del proyecto](01-optimizacion-rutas-ecommerce/)
+→ [See project details (in Spanish)](01-optimizacion-rutas-ecommerce/)
 
 ---
 
-## 02 · Control de calidad predictivo — Caso MetalX
+## 02 · Predictive quality control — MetalX case
 
-Predicción de la cantidad de piezas defectuosas por lote (`Defectos_Lote`) en un
-proceso de inyección de plástico, a partir de 4 variables de máquina medidas en
-tiempo real sobre 2 500 lotes.
+Prediction of the number of defective parts per batch (`Defectos_Lote`) in a
+plastic injection molding process, from 4 machine variables measured in
+real time across 2,500 batches.
 
 <div align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="02-control-calidad-metalx/assets/comparativa-modelos-dark.png">
-  <img src="02-control-calidad-metalx/assets/comparativa-modelos-light.png" alt="Comparativa de R² en test: Red Neuronal 0.553, Random Forest 0.516, Árbol de Decisión 0.440" width="720">
+  <img src="02-control-calidad-metalx/assets/comparativa-modelos-light.png" alt="Test R² comparison: Neural Network 0.553, Random Forest 0.516, Decision Tree 0.440" width="720">
 </picture>
 </div>
 
-| Modelo | MAE | MSE | R² |
+| Model | MAE | MSE | R² |
 |---|:--:|:--:|:--:|
-| **Red Neuronal (RNA)** *(16→8→1, ReLU)* | **9.80** | **240.1** | **0.553** |
+| **Neural Network (ANN)** *(16→8→1, ReLU)* | **9.80** | **240.1** | **0.553** |
 | Random Forest *(GridSearchCV)* | 10.18 | 260.0 | 0.516 |
-| Árbol de Decisión *(GridSearchCV)* | 10.87 | 300.7 | 0.440 |
+| Decision Tree *(GridSearchCV)* | 10.87 | 300.7 | 0.440 |
 
-**El hallazgo del proyecto.** La **vibración RMS de la máquina concentra el
-89.3 % de la importancia predictiva** (correlación de 0.57 con los defectos),
-muy por encima de temperatura de matriz (7.5 %), presión de inyección (2.4 %) y
-tiempo de ciclo (0.8 %). Traducido a planta: **monitorear la vibración es la
-palanca de control de calidad más rentable** del proceso, y justifica priorizar
-mantenimiento predictivo sobre el ajuste de los demás parámetros.
+**The key finding.** The machine's **RMS vibration accounts for 89.3% of the
+predictive importance** (correlation of 0.57 with defects), far above mold
+temperature (7.5%), injection pressure (2.4%) and cycle time (0.8%). In plant
+terms: **monitoring vibration is the most cost-effective quality-control lever**
+in the process, and it justifies prioritizing predictive maintenance over
+tuning the other parameters.
 
-El techo de R² ≈ 0.55 se explica por la fuerte asimetría de la variable objetivo
-(*skewness* = 4.65; mediana 34.9 defectos frente a un máximo de 533): los lotes
-atípicos son difíciles de anticipar con solo cuatro sensores.
+The R² ceiling of ≈ 0.55 is explained by the strong skew of the target variable
+(*skewness* = 4.65; median of 34.9 defects versus a maximum of 533): atypical
+batches are hard to anticipate with only four sensors.
 
-→ [Ver detalle del proyecto](02-control-calidad-metalx/)
+→ [See project details (in Spanish)](02-control-calidad-metalx/)
 
 ---
 
-## Stack técnico
+## Tech stack
 
-| Área | Herramientas |
+| Area | Tools |
 |---|---|
-| Manipulación de datos | `pandas`, `numpy` |
-| Visualización | `matplotlib`, `seaborn` |
-| Estadística | `scipy.stats` (Kolmogorov-Smirnov, Spearman, IQR) |
-| Machine Learning | `scikit-learn` (Decision Tree, Random Forest, KNN, GridSearchCV, K-Fold) |
-| Deep Learning | `tensorflow` / `keras` (redes densas) |
+| Data manipulation | `pandas`, `numpy` |
+| Visualization | `matplotlib`, `seaborn` |
+| Statistics | `scipy.stats` (Kolmogorov-Smirnov, Spearman, IQR) |
+| Machine learning | `scikit-learn` (Decision Tree, Random Forest, KNN, GridSearchCV, K-Fold) |
+| Deep learning | `tensorflow` / `keras` (dense networks) |
 
 ---
 
-## Estructura del repositorio
+## Repository structure
 
 ```
 UPC_projects_exams/
 ├── 01-optimizacion-rutas-ecommerce/
-│   ├── assets/                                  # gráficos exportados
+│   ├── assets/                                  # exported charts
 │   ├── dirty_ecommerce_logistics_route_planning_dataset.csv
 │   ├── optimizacion_rutas_ecommerce.ipynb
 │   └── README.md
 ├── 02-control-calidad-metalx/
 │   ├── assets/
 │   ├── control_calidad_metalx.ipynb
-│   ├── control_calidad_metalx.py                # mismo análisis como script
+│   ├── control_calidad_metalx.py                # same analysis as a script
 │   ├── df_metalx.csv
 │   └── README.md
 ├── docs/
-│   ├── index.html                               # panel publicado en GitHub Pages
+│   ├── index.html                               # dashboard published on GitHub Pages
 │   └── src/
-│       ├── build.py                             # regenera index.html desde los datos
-│       └── template.html                        # plantilla sin los datos inyectados
+│       ├── build.py                             # regenerates index.html from the data
+│       └── template.html                        # template without the injected data
 ├── requirements.txt
 ├── LICENSE
 └── README.md
 ```
 
-### Regenerar el panel
+### Regenerating the dashboard
 
-El panel no se edita a mano: `index.html` se genera reentrenando los modelos y
-serializando el Random Forest dentro de la plantilla.
+The dashboard is not edited by hand: `index.html` is generated by retraining the
+models and serializing the Random Forest into the template.
 
 ```bash
 python docs/src/build.py
@@ -158,31 +160,31 @@ python docs/src/build.py
 
 ---
 
-## Cómo ejecutarlo
+## How to run it
 
 ```bash
 git clone https://github.com/fcarruitero24/UPC_projects_exams.git
 cd UPC_projects_exams
 
 python -m venv .venv
-source .venv/bin/activate        # en Windows: .venv\Scripts\activate
+source .venv/bin/activate        # on Windows: .venv\Scripts\activate
 
 pip install -r requirements.txt
 jupyter notebook
 ```
 
 > [!NOTE]
-> Los notebooks cargan los datasets por ruta relativa, así que deben ejecutarse
-> desde la carpeta de su propio proyecto. Los notebooks ya vienen con todas las
-> salidas y gráficos guardados: se pueden leer en GitHub sin ejecutar nada.
+> The notebooks load the datasets by relative path, so they must be run
+> from their own project folder. The notebooks already include all outputs
+> and charts: they can be read on GitHub without running anything.
 
 ---
 
-## Autor
+## Author
 
-**Fabrizio Carruitero** — Ingeniería Industrial, UPC
-Datos y Machine Learning aplicados a procesos industriales
+**Fabrizio Carruitero** — Industrial Engineering, UPC
+Data and machine learning applied to industrial processes
 
 [![GitHub](https://img.shields.io/badge/GitHub-fcarruitero24-181717?style=flat-square&logo=github)](https://github.com/fcarruitero24)
 
-<sub>Distribuido bajo licencia MIT. Los datasets son de uso académico.</sub>
+<sub>Distributed under the MIT license. The datasets are for academic use.</sub>
